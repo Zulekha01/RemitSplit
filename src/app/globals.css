@@ -1,56 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 60 9% 97%; /* #F9F9F7 Newsprint Off-White */
+    --foreground: 0 0% 7%;   /* #111111 Ink Black */
+    --card: 60 9% 97%;
+    --card-foreground: 0 0% 7%;
+    --popover: 60 9% 97%;
+    --popover-foreground: 0 0% 7%;
+    --primary: 0 0% 7%;      /* #111111 Ink Black */
+    --primary-foreground: 60 9% 97%;
+    --secondary: 60 5% 90%;  /* #E5E5E0 Divider Grey */
+    --secondary-foreground: 0 0% 7%;
+    --muted: 60 5% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 100% 40%;    /* #CC0000 Editorial Red */
+    --accent-foreground: 60 9% 97%;
+    --destructive: 0 100% 40%;
+    --destructive-foreground: 60 9% 97%;
+    --border: 0 0% 7%;       /* #111111 Ink Black */
+    --input: 0 0% 7%;
+    --ring: 0 0% 7%;
+    --radius: 0px;
   }
 }
 
+* {
+  border-radius: 0px !important;
+}
+
 body {
-  color: hsl(var(--foreground));
-  background: hsl(var(--background));
-  font-feature-settings: "rlig" 1, "calt" 1;
+  color: #111111;
+  background-color: #F9F9F7;
+  font-family: 'Lora', Georgia, serif;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.035' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Newsprint Custom Utilities */
+.font-serif {
+  font-family: 'Playfair Display', 'Times New Roman', serif;
+}
+
+.font-body {
+  font-family: 'Lora', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.sharp-corners {
+  border-radius: 0px !important;
+}
+
+.hard-shadow-hover {
+  transition: all 0.15s ease-out;
+}
+
+.hard-shadow-hover:hover {
+  box-shadow: 4px 4px 0px 0px #111111;
+  transform: translate(-2px, -2px);
+}
+
+.hard-shadow-sm {
+  box-shadow: 2px 2px 0px 0px #111111;
+}
+
+.hard-shadow-md {
+  box-shadow: 4px 4px 0px 0px #111111;
+}
+
+.hard-shadow-lg {
+  box-shadow: 6px 6px 0px 0px #111111;
+}
+
+.newsprint-texture {
+  position: relative;
+}
+
+.newsprint-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.03) 100%),
+    linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.03) 100%);
+  background-size: 4px 4px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.drop-cap::first-letter {
+  font-family: 'Playfair Display', serif;
+  float: left;
+  font-size: 4.5rem;
+  line-height: 0.8;
+  padding-top: 4px;
+  padding-right: 12px;
+  padding-bottom: 2px;
+  font-weight: 900;
+  color: #111111;
+}
+
+/* Newspaper Marquee Crawl */
+@keyframes ticker {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: ticker 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
