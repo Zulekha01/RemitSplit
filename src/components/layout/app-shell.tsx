@@ -1,62 +1,50 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Navbar } from "./navbar";
 import { Sidebar } from "./sidebar";
 import { NetworkBanner } from "./network-banner";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+interface AppShellProps {
+  children: React.ReactNode;
+}
 
+export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/30 dark:bg-slate-950">
+    <div className="min-h-screen bg-[#F9F9F7] text-[#111111] flex flex-col selection:bg-[#111111] selection:text-[#F9F9F7]">
       <NetworkBanner />
-      <Navbar onToggleSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
+      <Navbar />
 
-      <div className="flex-1 flex container mx-auto px-0 md:px-4">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto border-x-2 border-[#111111]">
         {/* Desktop Sidebar */}
-        <Sidebar className="hidden lg:flex my-4 rounded-2xl shadow-sm h-[calc(100vh-8.5rem)] sticky top-20" />
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
 
-        {/* Mobile Sidebar Overlay */}
-        {mobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setMobileSidebarOpen(false)}
-            />
-            <Sidebar
-              className="relative z-50 h-full w-72 bg-white dark:bg-slate-950 p-4 shadow-2xl"
-              onClose={() => setMobileSidebarOpen(false)}
-            />
-          </div>
-        )}
-
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl overflow-x-hidden">
+        {/* Main Broadsheet Content Area */}
+        <main className="flex-1 p-4 sm:p-8 overflow-y-auto bg-[#F9F9F7]">
           {children}
         </main>
       </div>
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground bg-white/50 dark:bg-slate-950/50">
-        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>RemitSplit &copy; 2026 — Programmable Cross-Border Remittance Protocol on Stellar</span>
-          <div className="flex items-center space-x-4">
-            <a
-              href="https://developers.stellar.org"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition-colors"
-            >
-              Stellar Docs
-            </a>
-            <a
-              href="https://stellar.expert/explorer/testnet"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition-colors"
-            >
-              StellarExpert Testnet
-            </a>
+      {/* Gazette Broadsheet Footer */}
+      <footer className="border-t-4 border-[#111111] bg-[#111111] text-[#F9F9F7] py-6 px-4 font-mono text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-0.5 text-center sm:text-left">
+            <span className="font-serif text-lg font-bold text-white block">
+              REMIT SPLIT GAZETTE
+            </span>
+            <p className="text-[11px] text-[#A3A3A3]">
+              Programmable Cross-Border Remittance Splitting on the Stellar Network.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-4 text-[10px] uppercase tracking-widest text-[#A3A3A3]">
+            <span>EDITION: VOL 1.0</span>
+            <span>·</span>
+            <span>SOROBAN SDK v26</span>
+            <span>·</span>
+            <span className="text-white font-bold">ALL RIGHTS RESERVED</span>
           </div>
         </div>
       </footer>

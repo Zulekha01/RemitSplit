@@ -1,44 +1,47 @@
 import React from "react";
 import { ExternalLink } from "lucide-react";
-import { getExplorerUrl, truncateHash, truncateAddress } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
+import { getExplorerUrl, truncateHash } from "@/lib/formatters";
 
 interface ExplorerLinkProps {
-  type: "account" | "contract" | "tx";
+  type: "tx" | "account" | "contract";
   value: string;
-  truncate?: boolean;
   network?: string;
-  className?: string;
+  iconOnly?: boolean;
+  truncate?: boolean;
 }
 
 export function ExplorerLink({
   type,
   value,
-  truncate = true,
   network = "testnet",
-  className,
+  iconOnly = false,
+  truncate = true,
 }: ExplorerLinkProps) {
-  if (!value) return <span className="text-muted-foreground">-</span>;
-
   const url = getExplorerUrl(type, value, network);
-  const displayText = truncate
-    ? type === "tx"
-      ? truncateHash(value)
-      : truncateAddress(value)
-    : value;
+
+  if (iconOnly) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#111111] hover:text-[#CC0000] transition-colors p-0.5 inline-block"
+        title="View on StellarExpert"
+      >
+        <ExternalLink className="h-3 w-3" />
+      </a>
+    );
+  }
 
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(
-        "inline-flex items-center space-x-1 font-mono text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors",
-        className
-      )}
+      className="inline-flex items-center space-x-1 font-mono text-xs text-[#111111] hover:text-[#CC0000] underline-offset-4 decoration-1 hover:underline transition-colors"
     >
-      <span>{displayText}</span>
-      <ExternalLink className="h-3 w-3" />
+      <span>{truncate ? truncateHash(value) : value}</span>
+      <ExternalLink className="h-3 w-3 shrink-0" />
     </a>
   );
 }
