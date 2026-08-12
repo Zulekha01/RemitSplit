@@ -1,0 +1,77 @@
+name: RemitSplit CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: Soroban Smart Contracts (Build & Test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Rust Format Check
+        run: cargo fmt --all -- --check
+
+      - name: Run Soroban Contract Tests
+        run: cargo test --workspace --verbose
+
+      - name: Install Stellar CLI
+        run: |
+          cargo install --locked stellar-cli --features opt
+
+      - name: Build Contract WASM Artifacts
+        run: |
+          stellar contract build
+
+  frontend:
+    name: Frontend Dapp (Typecheck, Test & Build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: TypeScript Typecheck
+        run: pnpm typecheck
+
+      - name: Run Frontend Tests (Vitest)
+        run: pnpm test
+
+      - name: Build Next.js Production Dapp
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_STELLAR_NETWORK: testnet
+          NEXT_PUBLIC_STELLAR_RPC_URL: https://soroban-testnet.stellar.org
+          NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+          NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID: CBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+          NEXT_PUBLIC_NATIVE_ASSET_CONTRACT_ID: CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
