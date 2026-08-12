@@ -40,7 +40,6 @@ export default function DashboardPage() {
   const activeRule = family?.activeRule;
   const members = family?.members || [];
 
-  // Calculate metrics
   const totalDistributedStroops = transactions
     .filter((tx) => tx.type === "DISTRIBUTE" && tx.status === "CONFIRMED")
     .reduce((acc, tx) => acc + (tx.amount || 0n), 0n);
@@ -56,141 +55,124 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="space-y-8">
-        {/* Top Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                {family?.name || "Remittance Dashboard"}
-              </h1>
-              <Badge variant="stellar">Family #{family?.id || 1}</Badge>
+        {/* Top Masthead Row */}
+        <div className="border-b-4 border-[#111111] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-[#737373]">
+                GROUP LEDGER · #{family?.id || 1}
+              </span>
+              <Badge variant="editorial">ACTIVE RECORD</Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Automated cross-border family remittance rule and distribution hub.
+            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+              {family?.name || "Remittance Overview"}
+            </h1>
+            <p className="font-body text-xs sm:text-sm text-[#525252]">
+              Real-time audit log, active allocation distribution, and settlement ledger.
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
             <Link href="/deposit">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-600/20">
+              <Button size="lg" variant="editorial" className="text-xs px-6 font-black shadow-[4px_4px_0px_0px_#111111]">
                 <Send className="h-4 w-4 mr-2" />
-                Deposit &amp; Split
+                Deposit &amp; Split Now
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Wallet Status Banner if disconnected */}
+        {/* Wallet Alert if disconnected */}
         {!isConnected && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/30 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="border-2 border-[#111111] bg-[#F5F5F5] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs">
             <div className="flex items-center space-x-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
-              <div className="text-sm">
-                <span className="font-semibold text-blue-900 dark:text-blue-200">
-                  Connect your Stellar wallet to submit on-chain remittances.
+              <span className="text-[#CC0000] font-black text-base">●</span>
+              <div>
+                <span className="font-bold text-[#111111] uppercase tracking-wider block">
+                  WALLET NOT CONNECTED:
                 </span>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  You can explore current family allocations and testnet simulation right now.
-                </p>
+                <span className="text-[#525252]">
+                  Connect your Stellar wallet to authorize and sign live on-chain remittance dispatches.
+                </span>
               </div>
             </div>
-            <Button onClick={() => connect()} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-medium shrink-0">
+            <Button onClick={() => connect()} size="sm" variant="default">
               Connect Wallet
             </Button>
           </div>
         )}
 
-        {/* Primary Metrics Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Total Remitted
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <AmountDisplay stroops={totalDistributedStroops} size="xl" />
-              <div className="text-xs text-muted-foreground mt-1 flex items-center">
-                <span>{successfulDistributions} completed distributions</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Primary 4-Column Stat Grid with Collapsed Borders */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-2 border-[#111111] divide-y sm:divide-y-0 sm:divide-x divide-[#111111] bg-[#F9F9F7]">
+          <div className="p-6 space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              TOTAL REMITTED [SETTLED]
+            </span>
+            <AmountDisplay stroops={totalDistributedStroops} size="xl" />
+            <div className="font-mono text-[10px] text-[#737373]">
+              {successfulDistributions} completed dispatches
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Active Rule
-              </CardTitle>
-              <Sliders className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-slate-900 dark:text-white">
-                {activeRule ? `Version ${activeRule.version}` : "No Active Rule"}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Strategy: <span className="font-medium text-foreground">{activeRule?.strategy || "None"}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              ACTIVE STRATEGY
+            </span>
+            <div className="font-serif text-2xl font-bold text-[#111111]">
+              {activeRule ? `v${activeRule.version} · ${activeRule.strategy}` : "No Rule"}
+            </div>
+            <div className="font-mono text-[10px] text-[#737373]">
+              {activeRule ? `${activeRule.allocations.length} Approved Recipients` : "Setup required"}
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Family Recipients
-              </CardTitle>
-              <Users className="h-4 w-4 text-indigo-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-slate-900 dark:text-white">
-                {members.filter((m) => m.role === "Recipient").length} Approved
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Total members: <span className="font-medium text-foreground">{members.length}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              FAMILY BENEFICIARIES
+            </span>
+            <div className="font-serif text-2xl font-bold text-[#111111]">
+              {members.filter((m) => m.role === "Recipient").length} Approved
+            </div>
+            <div className="font-mono text-[10px] text-[#737373]">
+              {members.length} Total Registered Members
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Pending Execution
-              </CardTitle>
-              <Clock className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-slate-900 dark:text-white">
-                {pendingDistributions}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {pendingDistributions === 0 ? "All distributions settled" : "Processing transactions"}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              PENDING SETTLEMENTS
+            </span>
+            <div className="font-serif text-2xl font-bold text-[#111111]">
+              {pendingDistributions}
+            </div>
+            <div className="font-mono text-[10px] text-[#737373]">
+              {pendingDistributions === 0 ? "All dispatches cleared" : "Processing on-chain..."}
+            </div>
+          </div>
         </div>
 
-        {/* Active Allocation Rule Visualization */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
+        {/* 2-Column Split: Active Rule Breakdown & Family Roster */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Active Split Rule (8 cols) */}
+          <div className="lg:col-span-8 border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
               <div>
-                <div className="flex items-center space-x-2">
-                  <CardTitle>Active Split Rule Allocations</CardTitle>
-                  {activeRule && <Badge variant="success">Active v{activeRule.version}</Badge>}
-                </div>
-                <CardDescription className="mt-1">
-                  On-chain allocation percentages executed automatically upon sender deposit.
-                </CardDescription>
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#CC0000]">
+                  ACTIVE RULE SPECIFICATION
+                </span>
+                <h3 className="font-serif text-xl font-bold text-[#111111]">
+                  Current On-Chain Allocations {activeRule && `(v${activeRule.version})`}
+                </h3>
               </div>
               <Link href="/rules/builder">
                 <Button variant="outline" size="sm">
                   <Sliders className="h-3.5 w-3.5 mr-1.5" />
-                  Edit / New Rule
+                  Modify Rule
                 </Button>
               </Link>
-            </CardHeader>
+            </div>
 
-            <CardContent className="space-y-5">
+            <div className="p-6 space-y-6">
               {activeRule && activeRule.allocations.length > 0 ? (
                 activeRule.allocations.map((alloc, idx) => {
                   const sharePercentage = activeRule.strategy === "Percentage"
@@ -200,168 +182,112 @@ export default function DashboardPage() {
                     : 40;
 
                   return (
-                    <div key={idx} className="space-y-2 p-3.5 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-slate-900 dark:text-slate-100">
-                            {alloc.label || `Beneficiary ${idx + 1}`}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-blue-600 dark:text-blue-400">
-                            {activeRule.strategy === "Percentage"
-                              ? bpsToPercentage(alloc.shareOrAmount)
-                              : activeRule.strategy === "FixedAmount"
-                              ? `${stroopsToXlm(alloc.shareOrAmount)} XLM (Fixed)`
-                              : alloc.shareOrAmount === 0n
-                              ? "Remaining Balance"
-                              : `Up to ${stroopsToXlm(alloc.shareOrAmount)} XLM`}
-                          </span>
-                        </div>
+                    <div key={idx} className="border border-[#111111] p-4 bg-[#F5F5F5] space-y-3 font-mono text-xs">
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="font-serif text-base text-[#111111]">
+                          {idx + 1}. {alloc.label || `Beneficiary ${idx + 1}`}
+                        </span>
+                        <span className="text-[#111111] font-black text-sm">
+                          {activeRule.strategy === "Percentage"
+                            ? bpsToPercentage(alloc.shareOrAmount)
+                            : activeRule.strategy === "FixedAmount"
+                            ? `${stroopsToXlm(alloc.shareOrAmount)} XLM (Fixed)`
+                            : alloc.shareOrAmount === 0n
+                            ? "Remaining Balance"
+                            : `Up to ${stroopsToXlm(alloc.shareOrAmount)} XLM`}
+                        </span>
                       </div>
 
-                      <Progress value={sharePercentage} className="h-2" />
+                      <Progress value={sharePercentage} className="h-2.5" />
 
-                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                      <div className="flex items-center justify-between text-[11px] text-[#525252] pt-1">
                         <AddressPill address={alloc.recipient} showExplorer={false} />
-                        <span>Recipient #{idx + 1}</span>
+                        <span>Share Weight: {sharePercentage.toFixed(1)}%</span>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="py-8 text-center text-muted-foreground text-sm">
-                  No active rule configured. Create a rule to start splitting remittances.
+                <div className="py-12 text-center font-mono text-xs text-[#737373]">
+                  No active rule configured for this family group.
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Quick Family Snapshot */}
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base">Family Members</CardTitle>
-              <Link href="/families">
-                <Button variant="ghost" size="sm" className="text-xs text-blue-600">
-                  Manage
-                  <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {members.map((member) => (
-                <div
-                  key={member.address}
-                  className="flex items-center justify-between p-2.5 rounded-lg border bg-white dark:bg-slate-900/80 text-xs"
-                >
-                  <div className="flex flex-col space-y-0.5">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">
-                      {member.name}
-                    </span>
-                    <span className="font-mono text-muted-foreground text-[11px]">
-                      {member.address.slice(0, 4)}...{member.address.slice(-4)}
-                    </span>
+          {/* Quick Roster (4 cols) */}
+          <div className="lg:col-span-4 border-2 border-[#111111] bg-[#F9F9F7] flex flex-col justify-between">
+            <div>
+              <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+                <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#111111]">
+                  MEMBERS ROSTER
+                </span>
+                <Link href="/families" className="font-mono text-[10px] uppercase font-bold text-[#CC0000] hover:underline">
+                  MANAGE →
+                </Link>
+              </div>
+
+              <div className="divide-y divide-[#111111]">
+                {members.map((m) => (
+                  <div key={m.address} className="p-3.5 flex items-center justify-between text-xs font-mono">
+                    <div>
+                      <span className="font-serif font-bold block text-[#111111] text-sm">
+                        {m.name}
+                      </span>
+                      <span className="text-[10px] text-[#737373]">
+                        {m.address.slice(0, 6)}...{m.address.slice(-6)}
+                      </span>
+                    </div>
+                    <Badge variant={m.role === "Sender" ? "default" : "secondary"}>
+                      {m.role}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={
-                      member.role === "Sender"
-                        ? "stellar"
-                        : member.role === "CoAdmin"
-                        ? "warning"
-                        : "secondary"
-                    }
-                  >
-                    {member.role}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] text-[10px] font-mono text-[#525252]">
+              Family Owner: <span className="font-bold text-[#111111]">{family?.owner.slice(0, 6)}...</span>
+            </div>
+          </div>
         </div>
 
-        {/* Recent Transactions & Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Distributions */}
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base">Recent Remittance Distributions</CardTitle>
-              <Link href="/transactions">
-                <Button variant="ghost" size="sm" className="text-xs text-blue-600">
-                  View All
-                  <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {transactions.slice(0, 3).map((tx) => (
-                  <div
-                    key={tx.hash}
-                    className="flex items-center justify-between p-3 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40 text-xs"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-slate-900 dark:text-slate-100">
-                          {tx.type.replace("_", " ")}
-                        </span>
-                        <StatusBadge status={tx.status} />
-                      </div>
-                      <div className="text-muted-foreground text-[11px]">
-                        {formatTimestamp(tx.createdAt)}
-                      </div>
-                    </div>
+        {/* Recent Distributions Table (Broadsheet Style) */}
+        <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+          <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#111111]">
+              RECENT DISPATCHES &amp; TRANSACTIONS
+            </span>
+            <Link href="/transactions" className="font-mono text-[10px] uppercase font-bold text-[#CC0000] hover:underline">
+              FULL GAZETTE →
+            </Link>
+          </div>
 
-                    <div className="flex flex-col items-end space-y-1">
-                      {tx.amount && <AmountDisplay stroops={tx.amount} size="sm" />}
-                      <ExplorerLink type="tx" value={tx.hash} />
-                    </div>
+          <div className="divide-y divide-[#111111]">
+            {transactions.slice(0, 4).map((tx) => (
+              <div
+                key={tx.hash}
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono hover:bg-[#F5F5F5] transition-colors"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-sm text-[#111111] font-serif">
+                      {tx.type.replace("_", " ")}
+                    </span>
+                    <StatusBadge status={tx.status} />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <span className="text-[11px] text-[#737373]">
+                    Timestamp: {formatTimestamp(tx.createdAt)}
+                  </span>
+                </div>
 
-          {/* Real-time Blockchain Activity */}
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div className="flex items-center space-x-2">
-                <CardTitle className="text-base">Live Activity Feed</CardTitle>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+                <div className="flex items-center space-x-6">
+                  {tx.amount && <AmountDisplay stroops={tx.amount} size="md" />}
+                  <ExplorerLink type="tx" value={tx.hash} />
+                </div>
               </div>
-              <Link href="/activity">
-                <Button variant="ghost" size="sm" className="text-xs text-blue-600">
-                  Full Stream
-                  <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {events.slice(0, 4).map((evt) => (
-                  <div
-                    key={evt.id}
-                    className="flex items-start space-x-3 p-2.5 rounded-lg border bg-white dark:bg-slate-900/80 text-xs"
-                  >
-                    <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mt-0.5">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="flex-1 space-y-0.5">
-                      <p className="font-medium text-slate-900 dark:text-slate-100">
-                        {evt.details}
-                      </p>
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span>{formatTimestamp(evt.timestamp)}</span>
-                        {evt.txHash && <ExplorerLink type="tx" value={evt.txHash} />}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
       </div>
     </AppShell>
