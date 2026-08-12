@@ -3,34 +3,23 @@ import { cn } from "@/lib/utils";
 
 interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: number;
-  max?: number;
-  indicatorClassName?: string;
 }
 
-const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
-  ({ className, value = 0, max = 100, indicatorClassName, ...props }, ref) => {
-    const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+export function Progress({ className, value = 0, ...props }: ProgressProps) {
+  const percentage = Math.min(Math.max(value, 0), 100);
 
-    return (
+  return (
+    <div
+      className={cn(
+        "relative h-3 w-full overflow-hidden border border-[#111111] bg-[#E5E5E0] sharp-corners",
+        className
+      )}
+      {...props}
+    >
       <div
-        ref={ref}
-        className={cn(
-          "relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800",
-          className
-        )}
-        {...props}
-      >
-        <div
-          className={cn(
-            "h-full w-full flex-1 bg-primary transition-all duration-300 ease-in-out",
-            indicatorClassName
-          )}
-          style={{ transform: `translateX(-${100 - percentage}%)` }}
-        />
-      </div>
-    );
-  }
-);
-Progress.displayName = "Progress";
-
-export { Progress };
+        className="h-full bg-[#111111] transition-all duration-300 ease-out"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+}
