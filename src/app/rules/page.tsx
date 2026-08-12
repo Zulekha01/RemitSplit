@@ -6,18 +6,14 @@ import {
   Sliders,
   Plus,
   CheckCircle2,
-  AlertTriangle,
-  History,
   Check,
   Percent,
   Zap,
-  ArrowRight,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useFamilyStore } from "@/state/use-family-store";
 import { useWalletStore } from "@/state/use-wallet-store";
 import { useTransactionStore } from "@/state/use-transaction-store";
@@ -101,80 +97,73 @@ export default function RulesPage() {
     <AppShell>
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                Programmable Split Rules
-              </h1>
-              <Badge variant="stellar">Versioned</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create, version, and activate deterministic remittance distribution algorithms.
+        <div className="border-b-4 border-[#111111] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+              ALGORITHMIC SPLIT RULES · ON-CHAIN VERSIONING
+            </span>
+            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+              Rule Version Archive
+            </h1>
+            <p className="font-body text-xs sm:text-sm text-[#525252]">
+              Historical ledger of programmable remittance rules and active distribution algorithms.
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
             <Link href="/rules/builder">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/20">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button variant="default" size="sm">
+                <Plus className="h-4 w-4 mr-1.5" />
                 Build New Rule
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Rules Grid */}
+        {/* Rules Archive */}
         <div className="space-y-6">
           {familyRules.length === 0 ? (
-            <Card className="border border-dashed p-12 text-center">
-              <Sliders className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-3" />
-              <h3 className="text-lg font-bold">No Split Rules Created Yet</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1 mb-6">
+            <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4">
+              <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+              <h3 className="font-serif text-xl font-bold text-[#111111]">No Rules Formulated Yet</h3>
+              <p className="font-body text-xs text-[#525252] max-w-sm mx-auto">
                 Define how remittances should be split among family members using percentages, fixed amounts, or waterfall priorities.
               </p>
               <Link href="/rules/builder">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Rule
+                <Button variant="default" size="sm">
+                  Create First Split Rule
                 </Button>
               </Link>
-            </Card>
+            </div>
           ) : (
             familyRules.map((rule) => {
               const isActive = family?.activeRuleVersion === rule.version;
 
               return (
-                <Card
+                <div
                   key={rule.version}
-                  className={`border shadow-sm transition-all ${
-                    isActive
-                      ? "ring-2 ring-blue-500/50 bg-blue-50/10 dark:bg-blue-950/10"
-                      : "opacity-90"
+                  className={`border-2 border-[#111111] bg-[#F9F9F7] ${
+                    isActive ? "shadow-[6px_6px_0px_0px_#111111]" : "opacity-90"
                   }`}
                 >
-                  <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3">
+                  <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-3">
-                        <CardTitle className="text-lg">
+                        <span className="font-serif text-xl font-bold text-[#111111]">
                           Rule Version {rule.version}
-                        </CardTitle>
-                        <Badge
-                          variant={
-                            rule.strategy === "Percentage"
-                              ? "stellar"
-                              : rule.strategy === "FixedAmount"
-                              ? "success"
-                              : "warning"
-                          }
-                        >
+                        </span>
+                        <Badge variant={rule.strategy === "Percentage" ? "default" : "secondary"}>
                           {rule.strategy}
                         </Badge>
-                        {isActive && <Badge variant="success">Active</Badge>}
+                        {isActive && (
+                          <Badge variant="editorial">
+                            ● ACTIVE IN PROTOCOL
+                          </Badge>
+                        )}
                       </div>
-                      <CardDescription>
-                        Created by <span className="font-mono">{rule.createdBy.slice(0, 4)}...{rule.createdBy.slice(-4)}</span> on {formatTimestamp(rule.createdAt)}
-                      </CardDescription>
+                      <span className="font-mono text-[10px] text-[#737373] block uppercase tracking-wider">
+                        Created by {rule.createdBy.slice(0, 6)}... on {formatTimestamp(rule.createdAt)}
+                      </span>
                     </div>
 
                     <div className="flex items-center space-x-3">
@@ -183,34 +172,31 @@ export default function RulesPage() {
                           variant="outline"
                           size="sm"
                           onClick={handleDeactivate}
-                          className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                          className="border-[#CC0000] text-[#CC0000] hover:bg-[#CC0000] hover:text-white"
                         >
                           Deactivate
                         </Button>
                       ) : (
                         <Button
+                          variant="default"
                           size="sm"
                           disabled={loadingVersion === rule.version}
                           onClick={() => handleActivate(rule.version)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                         >
                           <Check className="h-4 w-4 mr-1.5" />
                           {loadingVersion === rule.version ? "Activating..." : "Set as Active Rule"}
                         </Button>
                       )}
                     </div>
-                  </CardHeader>
+                  </div>
 
-                  <CardContent className="space-y-4 pt-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 border border-[#111111] divide-y md:divide-y-0 md:divide-x divide-[#111111] bg-[#F5F5F5] font-mono text-xs">
                       {rule.allocations.map((alloc, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3 rounded-xl border bg-white dark:bg-slate-900/60 space-y-2 text-xs"
-                        >
-                          <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
-                            <span>{alloc.label}</span>
-                            <span className="text-blue-600 dark:text-blue-400 font-bold">
+                        <div key={idx} className="p-4 space-y-2">
+                          <div className="flex items-center justify-between font-bold">
+                            <span className="font-serif text-sm text-[#111111]">{alloc.label}</span>
+                            <span className="text-[#111111] font-black">
                               {rule.strategy === "Percentage"
                                 ? bpsToPercentage(alloc.shareOrAmount)
                                 : rule.strategy === "FixedAmount"
@@ -220,13 +206,12 @@ export default function RulesPage() {
                                 : `≤ ${stroopsToXlm(alloc.shareOrAmount)} XLM`}
                             </span>
                           </div>
-
                           <AddressPill address={alloc.recipient} showExplorer={false} />
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })
           )}

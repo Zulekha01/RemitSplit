@@ -8,18 +8,14 @@ import {
   AlertCircle,
   RefreshCw,
   Sliders,
-  ExternalLink,
   ShieldCheck,
   ArrowRight,
   Wallet,
-  Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { useFamilyStore } from "@/state/use-family-store";
 import { useWalletStore } from "@/state/use-wallet-store";
 import { useTransactionStore } from "@/state/use-transaction-store";
@@ -50,15 +46,13 @@ export default function DepositPage() {
   const amountNumber = parseFloat(amountStr) || 0;
   const amountStroops = xlmToStroops(amountStr);
 
-  // Calculate live preview payouts
-  const previewPayouts = (activeRule?.allocations || []).map((alloc, idx) => {
+  const previewPayouts = (activeRule?.allocations || []).map((alloc) => {
     let payoutStroops = 0n;
     if (activeRule?.strategy === "Percentage") {
       payoutStroops = (amountStroops * alloc.shareOrAmount) / 10000n;
     } else if (activeRule?.strategy === "FixedAmount") {
       payoutStroops = alloc.shareOrAmount;
     } else {
-      // Waterfall preview
       payoutStroops = alloc.shareOrAmount === 0n ? amountStroops / 2n : alloc.shareOrAmount;
     }
 
@@ -89,18 +83,15 @@ export default function DepositPage() {
     setErrorMsg("");
 
     try {
-      // Simulate on-chain transaction
       setIsSimulating(true);
       await new Promise((res) => setTimeout(res, 800));
       setIsSimulating(false);
 
       setStep("PROCESSING");
 
-      // Generate real-format testnet transaction hash
       const hash = "6e" + Array.from({ length: 62 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
       setTxHash(hash);
 
-      // Record transaction
       addTransaction({
         hash,
         type: "DISTRIBUTE",
@@ -121,10 +112,9 @@ export default function DepositPage() {
         amount: amountStroops,
         timestamp: Date.now(),
         txHash: hash,
-        details: `Deposited ${amountStr} XLM into RemitSplit Escrow`,
+        details: `Deposited ${amountStr} XLM into RemitSplit Escrow Vault`,
       });
 
-      // Simulate ledger confirmation and payouts
       await new Promise((res) => setTimeout(res, 2200));
 
       updateStatus(hash, "CONFIRMED");
@@ -137,7 +127,7 @@ export default function DepositPage() {
         amount: amountStroops,
         timestamp: Date.now(),
         txHash: hash,
-        details: `Remittance split of ${amountStr} XLM completed across ${activeRule.allocations.length} family recipients.`,
+        details: `Settled ${amountStr} XLM across ${activeRule.allocations.length} family recipients.`,
       });
 
       setStep("CONFIRMED");
@@ -155,69 +145,62 @@ export default function DepositPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 max-w-3xl mx-auto">
+      <div className="space-y-8 max-w-3xl mx-auto font-mono text-xs">
         {/* Header */}
-        <div className="border-b pb-6 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Deposit &amp; Split Remittance
-            </h1>
-            <Badge variant="stellar">Instant Settlement</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Deposit once from your wallet. Funds are automatically escrowed and split to family beneficiaries on-chain.
+        <div className="border-b-4 border-[#111111] pb-6">
+          <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+            OFFICIAL FINANCIAL DISPATCH · ATOMIC SETTLEMENT
+          </span>
+          <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+            Deposit &amp; Split
+          </h1>
+          <p className="font-body text-xs sm:text-sm text-[#525252]">
+            Single-entry escrow deposit automatically divided across family recipients according to active rule parameters.
           </p>
         </div>
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground px-2">
-          <div className={`flex items-center space-x-1.5 ${step === "INPUT" ? "text-blue-600 font-bold" : ""}`}>
-            <span className="h-5 w-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">1</span>
-            <span>Amount</span>
+        {/* Phase Indicator */}
+        <div className="grid grid-cols-3 border-2 border-[#111111] divide-x-2 divide-[#111111] bg-[#F5F5F5] uppercase tracking-wider font-bold text-center">
+          <div className={`p-3 ${step === "INPUT" ? "bg-[#111111] text-[#F9F9F7]" : ""}`}>
+            1. Amount
           </div>
-          <div className="h-0.5 w-12 bg-slate-200 dark:bg-slate-800" />
-          <div className={`flex items-center space-x-1.5 ${step === "PREVIEW" ? "text-blue-600 font-bold" : ""}`}>
-            <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[10px]">2</span>
-            <span>Split Preview</span>
+          <div className={`p-3 ${step === "PREVIEW" ? "bg-[#111111] text-[#F9F9F7]" : ""}`}>
+            2. Preview
           </div>
-          <div className="h-0.5 w-12 bg-slate-200 dark:bg-slate-800" />
-          <div className={`flex items-center space-x-1.5 ${step === "PROCESSING" || step === "CONFIRMED" ? "text-blue-600 font-bold" : ""}`}>
-            <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[10px]">3</span>
-            <span>Settlement</span>
+          <div className={`p-3 ${step === "PROCESSING" || step === "CONFIRMED" ? "bg-[#111111] text-[#F9F9F7]" : ""}`}>
+            3. Settlement
           </div>
         </div>
 
-        {/* Step 1: Input */}
+        {/* Phase 1: Amount Input */}
         {step === "INPUT" && (
-          <Card className="border shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg">Deposit Details</CardTitle>
-              <CardDescription>
-                Select target family group and total remittance deposit.
-              </CardDescription>
-            </CardHeader>
+          <div className="border-2 border-[#111111] bg-[#F9F9F7] space-y-6">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                SPECIFY DISPATCH PARAMETERS
+              </span>
+            </div>
 
-            <CardContent className="space-y-6">
+            <div className="p-6 space-y-6">
               {errorMsg && (
-                <div className="p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{errorMsg}</span>
+                <div className="border-2 border-[#CC0000] p-3 text-[#CC0000] font-bold bg-[#F9F9F7]">
+                  {errorMsg}
                 </div>
               )}
 
               {/* Family Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Target Family Group
+                <label className="font-bold uppercase tracking-wider text-[#737373]">
+                  Target Family Vault
                 </label>
                 <select
                   value={selectedFamilyId}
                   onChange={(e) => selectFamily(Number(e.target.value))}
-                  className="w-full text-sm rounded-lg border border-input bg-background px-3 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-xs font-mono border-2 border-[#111111] bg-[#F9F9F7] px-3 py-2.5 text-[#111111] focus:outline-none"
                 >
                   {families.map((f) => (
                     <option key={f.id} value={f.id}>
-                      {f.name} (Active Rule: v{f.activeRuleVersion || "None"})
+                      #{f.id} · {f.name} (Active Rule: v{f.activeRuleVersion || "None"})
                     </option>
                   ))}
                 </select>
@@ -225,24 +208,22 @@ export default function DepositPage() {
 
               {/* Active Rule Notice */}
               {activeRule ? (
-                <div className="p-4 rounded-xl border bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30 flex items-start space-x-3 text-xs">
-                  <Sliders className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="font-bold text-blue-900 dark:text-blue-200">
-                      Rule Version {activeRule.version} ({activeRule.strategy}) is Active
-                    </div>
-                    <p className="text-muted-foreground">
-                      This deposit will split across {activeRule.allocations.length} family recipients.
-                    </p>
+                <div className="border border-[#111111] bg-[#F5F5F5] p-4 space-y-1">
+                  <div className="font-bold text-[#111111] uppercase tracking-wider flex items-center justify-between">
+                    <span>RULE VERSION {activeRule.version} ({activeRule.strategy}) IN EFFECT</span>
+                    <Badge variant="editorial">ACTIVE</Badge>
                   </div>
+                  <p className="font-body text-xs text-[#525252]">
+                    Funds will split immediately upon deposit across {activeRule.allocations.length} authorized recipients.
+                  </p>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl border bg-amber-50 dark:bg-amber-950/20 border-amber-200 text-xs flex items-center justify-between">
-                  <span className="text-amber-800 dark:text-amber-200 font-medium">
-                    No active rule configured for this family.
+                <div className="border-2 border-[#CC0000] p-4 flex items-center justify-between">
+                  <span className="text-[#CC0000] font-bold">
+                    No active rule configured for this family group.
                   </span>
                   <Link href="/rules/builder">
-                    <Button size="sm" variant="outline" className="text-xs">
+                    <Button size="sm" variant="default">
                       Build Rule
                     </Button>
                   </Link>
@@ -252,12 +233,12 @@ export default function DepositPage() {
               {/* Deposit Amount */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase text-muted-foreground">
+                  <label className="font-bold uppercase tracking-wider text-[#737373]">
                     Remittance Amount
                   </label>
                   {isConnected && (
-                    <span className="text-xs text-muted-foreground">
-                      Available: <span className="font-mono font-bold text-foreground">{parseFloat(balance).toFixed(2)} XLM</span>
+                    <span className="text-[#737373]">
+                      Available: <strong>{parseFloat(balance).toFixed(2)} XLM</strong>
                     </span>
                   )}
                 </div>
@@ -272,209 +253,201 @@ export default function DepositPage() {
                     onChange={(e) => setAmountStr(e.target.value)}
                     className="text-2xl font-bold h-14 pl-4 pr-16 font-mono"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground uppercase">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#737373] uppercase">
                     XLM
                   </div>
                 </div>
 
-                {/* Quick amount presets */}
+                {/* Preset Chips */}
                 <div className="flex items-center space-x-2 pt-1">
                   {[250, 500, 1000, 2500, 5000].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setAmountStr(preset.toString())}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="px-3 py-1 font-mono text-xs font-bold border border-[#111111] bg-[#F5F5F5] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
                     >
                       {preset} XLM
                     </button>
                   ))}
                 </div>
               </div>
-            </CardContent>
+            </div>
 
-            <CardFooter className="flex justify-end border-t p-6">
+            <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] flex justify-end">
               {isConnected ? (
                 <Button
                   size="lg"
+                  variant="default"
                   onClick={handleStartDeposit}
                   disabled={!activeRule || amountNumber <= 0}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md shadow-blue-600/20"
+                  className="px-8 shadow-[4px_4px_0px_0px_#111111]"
                 >
-                  Continue to Split Preview
+                  Review Dispatch Calculations
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
                 <Button
                   size="lg"
+                  variant="default"
                   onClick={() => connect()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md shadow-blue-600/20"
+                  className="px-8"
                 >
                   <Wallet className="h-4 w-4 mr-2" />
                   Connect Wallet to Continue
                 </Button>
               )}
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* Step 2: Preview */}
+        {/* Phase 2: Split Preview */}
         {step === "PREVIEW" && (
-          <Card className="border shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg">Confirm Remittance Distribution</CardTitle>
-              <CardDescription>
-                Review individual beneficiary payouts computed by the smart contract before signing.
-              </CardDescription>
-            </CardHeader>
+          <div className="border-2 border-[#111111] bg-[#F9F9F7] space-y-6">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                OFFICIAL BREAKDOWN &amp; AUDIT RECEIPT
+              </span>
+              <Badge variant="default">{activeRule?.strategy}</Badge>
+            </div>
 
-            <CardContent className="space-y-6">
-              {/* Summary Pill */}
-              <div className="p-4 rounded-xl border bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-6 space-y-6">
+              {/* Receipt Header Pill */}
+              <div className="border-2 border-[#111111] p-5 bg-[#111111] text-[#F9F9F7] flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-slate-400 block font-medium">Total Remittance Deposit</span>
-                  <span className="text-2xl font-black">{amountStr} XLM</span>
+                  <span className="text-[10px] uppercase tracking-widest text-[#A3A3A3] block">
+                    TOTAL REMITTANCE PRINCIPAL
+                  </span>
+                  <span className="font-serif text-3xl font-black">{amountStr} XLM</span>
                 </div>
-                <Badge variant="stellar">
-                  {activeRule?.strategy} Mode
-                </Badge>
+                <div className="text-right font-mono text-xs text-[#A3A3A3]">
+                  <div>FAMILY #{family?.id}</div>
+                  <div>RULE v{activeRule?.version}</div>
+                </div>
               </div>
 
               {/* Recipient Payout Breakdown */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Computed Recipient Payouts ({previewPayouts.length})
-                </h4>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373] block">
+                  CALCULATED BENEFICIARY DISPATCHES ({previewPayouts.length})
+                </span>
 
-                {previewPayouts.map((payout, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between text-sm"
-                  >
-                    <div className="space-y-0.5">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">
-                        {payout.label}
-                      </span>
-                      <AddressPill address={payout.recipient} showExplorer={false} />
-                    </div>
-
-                    <div className="text-right font-bold text-blue-600 dark:text-blue-400">
+                <div className="border border-[#111111] divide-y divide-[#111111]">
+                  {previewPayouts.map((payout, idx) => (
+                    <div key={idx} className="p-3.5 bg-[#F5F5F5] flex items-center justify-between text-xs">
+                      <div className="space-y-0.5">
+                        <span className="font-serif font-bold text-sm text-[#111111] block">
+                          {idx + 1}. {payout.label}
+                        </span>
+                        <AddressPill address={payout.recipient} showExplorer={false} />
+                      </div>
                       <AmountDisplay stroops={payout.amountStroops} size="md" />
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+            </div>
 
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 text-xs text-emerald-800 dark:text-emerald-200 flex items-center space-x-2">
-                <ShieldCheck className="h-4 w-4 shrink-0" />
-                <span>Deterministic integer calculations validated against rounding drift.</span>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex items-center justify-between border-t p-6">
+            <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep("INPUT")}>
                 Back
               </Button>
               <Button
                 size="lg"
+                variant="editorial"
                 onClick={handleConfirmAndSign}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md shadow-blue-600/20"
+                className="px-8 shadow-[4px_4px_0px_0px_#111111]"
               >
-                Sign &amp; Execute Remittance
+                Authorize &amp; Sign Dispatch
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* Step 3: Signing / Processing / Confirmed */}
+        {/* Phase 3: Signing / Processing / Confirmed */}
         {(step === "SIGNING" || step === "PROCESSING" || step === "CONFIRMED" || step === "FAILED") && (
-          <Card className="border shadow-lg text-center p-8">
-            <CardContent className="space-y-6 pt-4">
-              {step === "SIGNING" && (
-                <div className="space-y-4">
-                  <div className="h-16 w-16 mx-auto rounded-full bg-blue-100 text-blue-600 flex items-center justify-center animate-pulse">
-                    <Wallet className="h-8 w-8" />
+          <div className="border-2 border-[#111111] bg-[#F9F9F7] p-8 text-center space-y-6">
+            {step === "SIGNING" && (
+              <div className="space-y-3">
+                <span className="font-mono text-3xl font-black text-[#111111] block animate-pulse">
+                  SIGNATURE REQUIRED
+                </span>
+                <p className="font-body text-xs text-[#525252] max-w-sm mx-auto">
+                  Please approve and sign the escrow transaction in your connected Stellar wallet.
+                </p>
+              </div>
+            )}
+
+            {step === "PROCESSING" && (
+              <div className="space-y-3">
+                <span className="font-mono text-3xl font-black text-[#111111] block animate-pulse">
+                  BROADCASTING TO LEDGER...
+                </span>
+                <p className="font-body text-xs text-[#525252] max-w-sm mx-auto">
+                  Escrowing funds and triggering Soroban inter-contract payout execution.
+                </p>
+                {txHash && (
+                  <div className="inline-block p-2 border border-[#111111] bg-[#F5F5F5] text-xs">
+                    Tx: {txHash.slice(0, 10)}...{txHash.slice(-10)}
                   </div>
-                  <h3 className="text-xl font-bold">Simulating &amp; Requesting Signature</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    Please approve the transaction in your Stellar wallet (Freighter / xBull / Albedo).
+                )}
+              </div>
+            )}
+
+            {step === "CONFIRMED" && (
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <Badge variant="editorial" className="text-xs px-3 py-1">
+                    SETTLEMENT COMPLETE
+                  </Badge>
+                  <h2 className="font-serif text-3xl sm:text-4xl font-black text-[#111111] pt-2">
+                    Remittance Settled on Stellar
+                  </h2>
+                  <p className="font-body text-xs text-[#525252]">
+                    {amountStr} XLM divided and delivered to {previewPayouts.length} beneficiaries.
                   </p>
                 </div>
-              )}
 
-              {step === "PROCESSING" && (
-                <div className="space-y-4">
-                  <div className="h-16 w-16 mx-auto rounded-full bg-blue-100 text-blue-600 flex items-center justify-center animate-spin">
-                    <RefreshCw className="h-8 w-8" />
+                <div className="border-2 border-[#111111] p-4 bg-[#F5F5F5] max-w-md mx-auto text-left space-y-2 text-xs">
+                  <div className="flex justify-between border-b border-[#111111]/20 pb-1">
+                    <span className="text-[#737373]">Status:</span>
+                    <StatusBadge status="CONFIRMED" />
                   </div>
-                  <h3 className="text-xl font-bold">Broadcasting to Stellar Testnet</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    Escrowing funds and executing cross-contract multi-recipient transfers...
-                  </p>
-                  {txHash && (
-                    <div className="inline-block p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border text-xs font-mono">
-                      Tx: {txHash.slice(0, 10)}...{txHash.slice(-10)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {step === "CONFIRMED" && (
-                <div className="space-y-6">
-                  <div className="h-16 w-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                    <CheckCircle2 className="h-10 w-10" />
+                  <div className="flex justify-between border-b border-[#111111]/20 pb-1">
+                    <span className="text-[#737373]">Amount:</span>
+                    <strong>{amountStr} XLM</strong>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
-                      Remittance Distributed Successfully!
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {amountStr} XLM has been split and delivered to all {previewPayouts.length} family recipients.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/60 max-w-md mx-auto text-left space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Status</span>
-                      <StatusBadge status="CONFIRMED" />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Amount</span>
-                      <span className="font-bold">{amountStr} XLM</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Stellar Transaction</span>
-                      <ExplorerLink type="tx" value={txHash} />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                    <Button onClick={handleReset} variant="outline" className="w-full sm:w-auto">
-                      Make Another Deposit
-                    </Button>
-                    <Link href="/transactions" className="w-full sm:w-auto">
-                      <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                        View Transaction Center
-                      </Button>
-                    </Link>
+                  <div className="flex justify-between">
+                    <span className="text-[#737373]">Ledger Proof:</span>
+                    <ExplorerLink type="tx" value={txHash} />
                   </div>
                 </div>
-              )}
 
-              {step === "FAILED" && (
-                <div className="space-y-4">
-                  <div className="h-16 w-16 mx-auto rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-                    <AlertCircle className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-red-600">Distribution Failed</h3>
-                  <p className="text-sm text-muted-foreground">{errorMsg}</p>
-                  <Button onClick={handleReset} variant="outline">
-                    Try Again
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <Button onClick={handleReset} variant="outline" className="w-full sm:w-auto">
+                    New Dispatch
                   </Button>
+                  <Link href="/transactions" className="w-full sm:w-auto">
+                    <Button variant="default" className="w-full sm:w-auto">
+                      View Transaction Gazette
+                    </Button>
+                  </Link>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+
+            {step === "FAILED" && (
+              <div className="space-y-4">
+                <span className="font-mono text-2xl font-black text-[#CC0000] block">
+                  DISPATCH EXECUTION FAILED
+                </span>
+                <p className="text-xs text-[#CC0000]">{errorMsg}</p>
+                <Button onClick={handleReset} variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </AppShell>

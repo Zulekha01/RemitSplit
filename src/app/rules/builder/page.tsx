@@ -13,14 +13,11 @@ import {
   Zap,
   ArrowLeft,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { useFamilyStore } from "@/state/use-family-store";
 import { useWalletStore } from "@/state/use-wallet-store";
 import { useTransactionStore } from "@/state/use-transaction-store";
@@ -30,7 +27,7 @@ import { xlmToStroops, bpsToPercentage } from "@/lib/formatters";
 
 interface BuilderItem {
   recipient: string;
-  amountStr: string; // e.g. "50" for 50%, or "500" for 500 XLM
+  amountStr: string;
   label: string;
 }
 
@@ -77,7 +74,7 @@ export default function RuleBuilderPage() {
     const roundedTotal = Math.round(totalPct * 100) / 100;
     if (Math.abs(roundedTotal - 100) > 0.001) {
       isValid = false;
-      validationMessage = `Total allocation is currently ${roundedTotal}% (Must equal exactly 100%).`;
+      validationMessage = `Total allocation is currently ${roundedTotal}% (Must equal exactly 100.00%).`;
     }
   } else if (strategy === "FixedAmount") {
     const hasZero = items.some((it) => (parseFloat(it.amountStr) || 0) <= 0);
@@ -85,11 +82,8 @@ export default function RuleBuilderPage() {
       isValid = false;
       validationMessage = "All fixed amounts must be greater than 0 XLM.";
     }
-  } else if (strategy === "Waterfall") {
-    // Valid by default
   }
 
-  // Check for duplicate recipients
   const recipientSet = new Set(items.map((it) => it.recipient).filter(Boolean));
   if (recipientSet.size !== items.filter((it) => it.recipient).length) {
     isValid = false;
@@ -148,7 +142,6 @@ export default function RuleBuilderPage() {
             label: it.label,
           };
         } else {
-          // Waterfall
           const stroops = it.amountStr === "0" || !it.amountStr ? 0n : xlmToStroops(it.amountStr);
           return {
             recipient: it.recipient,
@@ -183,12 +176,12 @@ export default function RuleBuilderPage() {
         actor: creator,
         timestamp: Date.now(),
         txHash: fakeHash,
-        details: `Created programmable Rule Version ${newVersion} (${strategy})`,
+        details: `Formulated programmable Rule Version ${newVersion} (${strategy})`,
       });
 
       router.push("/rules");
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to create rule on-chain");
+      setErrorMsg(err.message || "Failed to deploy rule on-chain");
     } finally {
       setIsSubmitting(false);
     }
@@ -198,122 +191,114 @@ export default function RuleBuilderPage() {
     <AppShell>
       <div className="space-y-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b pb-6">
-          <div className="space-y-1">
-            <Link
-              href="/rules"
-              className="inline-flex items-center text-xs font-semibold text-blue-600 hover:underline mb-1"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Back to Split Rules
-            </Link>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Programmable Rule Builder
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Define deterministic split algorithms for <span className="font-semibold text-foreground">{family?.name}</span>.
-            </p>
-          </div>
+        <div className="border-b-4 border-[#111111] pb-6">
+          <Link
+            href="/rules"
+            className="inline-flex items-center font-mono text-xs uppercase font-bold text-[#111111] hover:text-[#CC0000] mb-3"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            BACK TO RULES ARCHIVE
+          </Link>
+          <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+            DETERMINISTIC ALGORITHM BUILDER
+          </span>
+          <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+            Program Split Rule
+          </h1>
+          <p className="font-body text-xs sm:text-sm text-[#525252]">
+            Formulate mathematically enforced remittance distribution parameters for <span className="font-bold text-[#111111]">{family?.name}</span>.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8 font-mono text-xs">
           {/* Step 1: Strategy Selection */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base">1. Choose Allocation Strategy</CardTitle>
-              <CardDescription>
-                Select how the smart contract will compute multi-recipient splits upon deposit.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setStrategy("Percentage")}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    strategy === "Percentage"
-                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 ring-2 ring-blue-500/20"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 font-bold text-sm text-slate-900 dark:text-slate-100 mb-1">
-                    <Percent className="h-4 w-4 text-blue-600" />
-                    <span>Percentage Split</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Recipients receive exact basis point percentages of the deposit. Sum = 100%.
-                  </p>
-                </button>
+          <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                SECTION 1 · SELECT DISTRIBUTION MODEL
+              </span>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => setStrategy("FixedAmount")}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    strategy === "FixedAmount"
-                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 ring-2 ring-blue-500/20"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 font-bold text-sm text-slate-900 dark:text-slate-100 mb-1">
-                    <Zap className="h-4 w-4 text-emerald-600" />
-                    <span>Fixed Amounts</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Recipients receive predefined fixed XLM sums. Total must match deposit.
-                  </p>
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#111111]">
+              <button
+                type="button"
+                onClick={() => setStrategy("Percentage")}
+                className={`p-6 text-left transition-all ${
+                  strategy === "Percentage"
+                    ? "bg-[#111111] text-[#F9F9F7]"
+                    : "bg-[#F9F9F7] text-[#111111] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <div className="font-serif text-lg font-bold mb-1">
+                  Percentage Split
+                </div>
+                <p className="font-body text-xs opacity-90 leading-relaxed">
+                  Basis point shares (10,000 bps = 100%). Division remainder absorbed by final recipient.
+                </p>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setStrategy("Waterfall")}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    strategy === "Waterfall"
-                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 ring-2 ring-blue-500/20"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 font-bold text-sm text-slate-900 dark:text-slate-100 mb-1">
-                    <Sliders className="h-4 w-4 text-purple-600" />
-                    <span>Priority Waterfall</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Priority tiers receive up to a max cap; last tier receives all remaining balance.
-                  </p>
-                </button>
-              </div>
-            </CardContent>
-          </Card>
+              <button
+                type="button"
+                onClick={() => setStrategy("FixedAmount")}
+                className={`p-6 text-left transition-all ${
+                  strategy === "FixedAmount"
+                    ? "bg-[#111111] text-[#F9F9F7]"
+                    : "bg-[#F9F9F7] text-[#111111] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <div className="font-serif text-lg font-bold mb-1">
+                  Fixed Nominal Sums
+                </div>
+                <p className="font-body text-xs opacity-90 leading-relaxed">
+                  Fixed XLM amounts per recipient. Deposit must equal sum of allocations.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStrategy("Waterfall")}
+                className={`p-6 text-left transition-all ${
+                  strategy === "Waterfall"
+                    ? "bg-[#111111] text-[#F9F9F7]"
+                    : "bg-[#F9F9F7] text-[#111111] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <div className="font-serif text-lg font-bold mb-1">
+                  Priority Waterfall
+                </div>
+                <p className="font-body text-xs opacity-90 leading-relaxed">
+                  Top-down priority tiers with caps; final tier receives all residual balance.
+                </p>
+              </button>
+            </div>
+          </div>
 
           {/* Step 2: Allocation Items */}
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <div>
-                <CardTitle className="text-base">2. Configure Beneficiary Allocations</CardTitle>
-                <CardDescription>
-                  Select approved family recipients and set their allocated shares or caps.
-                </CardDescription>
-              </div>
+          <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                SECTION 2 · CONFIGURE BENEFICIARY ALLOCATIONS
+              </span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAddItem}
               >
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Beneficiary
               </Button>
-            </CardHeader>
+            </div>
 
-            <CardContent className="space-y-4">
+            <div className="p-6 space-y-4">
               {items.map((item, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                  className="border-2 border-[#111111] p-4 bg-[#F5F5F5] grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
                 >
-                  {/* Label */}
                   <div className="md:col-span-4 space-y-1">
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                      Label / Purpose
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                      Purpose / Label
                     </label>
                     <Input
                       placeholder="e.g. Parents Support"
@@ -323,15 +308,14 @@ export default function RuleBuilderPage() {
                     />
                   </div>
 
-                  {/* Recipient Member */}
                   <div className="md:col-span-5 space-y-1">
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                      Family Recipient
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                      Approved Family Recipient
                     </label>
                     <select
                       value={item.recipient}
                       onChange={(e) => handleItemChange(index, "recipient", e.target.value)}
-                      className="w-full text-sm rounded-lg border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full text-xs font-mono border-2 border-[#111111] bg-[#F9F9F7] px-3 py-2 text-[#111111] focus:outline-none"
                       required
                     >
                       <option value="">Select Recipient...</option>
@@ -343,9 +327,8 @@ export default function RuleBuilderPage() {
                     </select>
                   </div>
 
-                  {/* Share / Amount */}
                   <div className="md:col-span-2 space-y-1">
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
                       {strategy === "Percentage" ? "Share (%)" : "Amount (XLM)"}
                     </label>
                     <Input
@@ -359,87 +342,74 @@ export default function RuleBuilderPage() {
                     />
                   </div>
 
-                  {/* Remove Button */}
-                  <div className="md:col-span-1 flex justify-end pt-5">
-                    <Button
+                  <div className="md:col-span-1 flex justify-end pt-4">
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
                       onClick={() => handleRemoveItem(index)}
                       disabled={items.length <= 1}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="p-1 text-[#737373] hover:text-[#CC0000] disabled:opacity-30"
+                      title="Remove"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ))}
-            </CardContent>
+            </div>
 
-            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t p-4 gap-4 bg-slate-50/30 dark:bg-slate-900/30">
-              <div className="text-xs">
+            <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
                 {strategy === "Percentage" && (
                   <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-muted-foreground">Total:</span>
-                    <span
-                      className={`font-bold ${
-                        isValid ? "text-emerald-600" : "text-amber-600"
-                      }`}
-                    >
+                    <span className="font-bold text-[#737373]">TOTAL SHARES:</span>
+                    <span className={`font-black text-sm ${isValid ? "text-emerald-800" : "text-[#CC0000]"}`}>
                       {items.reduce((acc, it) => acc + (parseFloat(it.amountStr) || 0), 0).toFixed(2)}%
                     </span>
-                    {isValid && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                    {isValid && <CheckCircle2 className="h-4 w-4 text-emerald-800" />}
                   </div>
                 )}
 
                 {strategy === "FixedAmount" && (
-                  <div className="text-muted-foreground">
-                    Total Fixed Target: <span className="font-bold text-foreground">{items.reduce((acc, it) => acc + (parseFloat(it.amountStr) || 0), 0)} XLM</span>
-                  </div>
-                )}
-
-                {strategy === "Waterfall" && (
-                  <div className="text-muted-foreground">
-                    Waterfall tiers evaluated top-to-bottom upon deposit.
+                  <div>
+                    TOTAL FIXED TARGET: <strong>{items.reduce((acc, it) => acc + (parseFloat(it.amountStr) || 0), 0)} XLM</strong>
                   </div>
                 )}
               </div>
 
               {!isValid && (
-                <div className="flex items-center space-x-1.5 text-xs text-amber-600 font-medium">
+                <div className="text-[#CC0000] font-black flex items-center space-x-1.5">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{validationMessage}</span>
                 </div>
               )}
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
 
-          {/* Step 3: Activation Preferences & Submit */}
-          <Card className="border shadow-sm">
-            <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoActivate}
-                  onChange={(e) => setAutoActivate(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                  Immediately activate this rule version for future deposits
-                </span>
-              </label>
+          {/* Step 3: Activation & Submit */}
+          <div className="border-2 border-[#111111] bg-[#F9F9F7] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoActivate}
+                onChange={(e) => setAutoActivate(e.target.checked)}
+                className="h-4 w-4 rounded-none border-2 border-[#111111] text-[#111111] focus:ring-0"
+              />
+              <span className="font-bold uppercase tracking-wider text-[#111111]">
+                Immediately activate this rule version upon ledger confirmation
+              </span>
+            </label>
 
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!isValid || isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md shadow-blue-600/20 w-full sm:w-auto"
-              >
-                {isSubmitting ? "Creating Rule On-Chain..." : "Deploy Rule Version"}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
+            <Button
+              type="submit"
+              size="lg"
+              variant="default"
+              disabled={!isValid || isSubmitting}
+              className="w-full sm:w-auto px-10 shadow-[4px_4px_0px_0px_#111111]"
+            >
+              {isSubmitting ? "Deploying On-Chain..." : "Deploy Rule Version"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </form>
       </div>
     </AppShell>
