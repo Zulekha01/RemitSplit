@@ -2,7 +2,6 @@
 
 import React from "react";
 import {
-  BarChart3,
   TrendingUp,
   PieChart as PieChartIcon,
   CheckCircle2,
@@ -11,13 +10,11 @@ import {
   Activity,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useFamilyStore } from "@/state/use-family-store";
 import { useTransactionStore } from "@/state/use-transaction-store";
 import { AmountDisplay } from "@/components/shared/amount-display";
-import { stroopsToXlm } from "@/lib/formatters";
 
 export default function AnalyticsPage() {
   const { families, selectedFamilyId, getSelectedFamily } = useFamilyStore();
@@ -27,7 +24,6 @@ export default function AnalyticsPage() {
   const activeRule = family?.activeRule;
   const members = family?.members || [];
 
-  // Metrics computation from real application state
   const completedDistributions = transactions.filter(
     (tx) => tx.type === "DISTRIBUTE" && tx.status === "CONFIRMED"
   );
@@ -47,169 +43,141 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-8 font-mono text-xs">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                Remittance Analytics
-              </h1>
-              <Badge variant="stellar">Testnet Telemetry</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Financial trends, recipient allocation breakdown, and on-chain settlement performance.
+        <div className="border-b-4 border-[#111111] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+              STATISTICAL BULLETIN · FINANCIAL TELEMETRY
+            </span>
+            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+              Telemetry &amp; Reports
+            </h1>
+            <p className="font-body text-xs sm:text-sm text-[#525252]">
+              On-chain settlement metrics, allocation distribution shares, and protocol health indices.
             </p>
           </div>
         </div>
 
-        {/* Metric Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Total Distributed
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <AmountDisplay stroops={totalDistributedStroops} size="xl" />
-              <div className="text-xs text-muted-foreground mt-1">
-                Across {completedDistributions.length} completed remittances
-              </div>
-            </CardContent>
-          </Card>
+        {/* 4 Stat Cards in Collapsed Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-2 border-[#111111] divide-y sm:divide-y-0 sm:divide-x divide-[#111111] bg-[#F9F9F7]">
+          <div className="p-6 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              GROSS DISPATCH VOLUME
+            </span>
+            <AmountDisplay stroops={totalDistributedStroops} size="xl" />
+            <div className="text-[10px] text-[#737373]">
+              Across {completedDistributions.length} dispatches
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Average Transfer
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <AmountDisplay stroops={averageDistributionStroops} size="xl" />
-              <div className="text-xs text-muted-foreground mt-1">
-                Per remittance transaction
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              AVERAGE DISPATCH
+            </span>
+            <AmountDisplay stroops={averageDistributionStroops} size="xl" />
+            <div className="text-[10px] text-[#737373]">
+              Per family execution
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Settlement Success Rate
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                {successRate.toFixed(1)}%
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {successfulTxCount} of {totalTransactions} on-chain operations
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              SETTLEMENT SUCCESS
+            </span>
+            <div className="font-serif text-3xl font-black text-[#111111]">
+              {successRate.toFixed(1)}%
+            </div>
+            <div className="text-[10px] text-[#737373]">
+              {successfulTxCount} of {totalTransactions} operations
+            </div>
+          </div>
 
-          <Card className="border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Active Beneficiaries
-              </CardTitle>
-              <Users className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-slate-900 dark:text-white">
-                {members.filter((m) => m.role === "Recipient").length}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                In {family?.name || "Active Group"}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-[#737373] block font-bold">
+              BENEFICIARIES ROSTER
+            </span>
+            <div className="font-serif text-3xl font-black text-[#111111]">
+              {members.filter((m) => m.role === "Recipient").length}
+            </div>
+            <div className="text-[10px] text-[#737373]">
+              In {family?.name || "Active Vault"}
+            </div>
+          </div>
         </div>
 
-        {/* Allocation Breakdown & Strategy Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recipient Distribution Breakdown */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <PieChartIcon className="h-4 w-4 text-blue-600" />
-                <CardTitle className="text-base">Current Beneficiary Allocation Shares</CardTitle>
-              </div>
-              <CardDescription>
-                Live basis points distribution from active rule v{activeRule?.version || 1}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* 2-Column Reports */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Allocation Share Report */}
+          <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                BENEFICIARY ALLOCATION SHARES
+              </span>
+            </div>
+
+            <div className="p-6 space-y-4">
               {activeRule?.allocations.map((alloc, idx) => {
                 const percentage = activeRule.strategy === "Percentage"
                   ? Number(alloc.shareOrAmount) / 100
                   : 33.33;
 
                 return (
-                  <div key={idx} className="space-y-1.5 p-3 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span>{alloc.label}</span>
-                      <span className="text-blue-600 dark:text-blue-400 font-bold">
-                        {percentage.toFixed(1)}% ({activeRule.strategy === "Percentage" ? `${Number(alloc.shareOrAmount)} bps` : "Fixed/Waterfall"})
-                      </span>
+                  <div key={idx} className="border border-[#111111] p-3.5 bg-[#F5F5F5] space-y-2">
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="font-serif text-sm text-[#111111]">{alloc.label}</span>
+                      <span>{percentage.toFixed(1)}%</span>
                     </div>
                     <Progress value={percentage} className="h-2" />
-                    <div className="text-[11px] font-mono text-muted-foreground pt-1">
-                      {alloc.recipient.slice(0, 6)}...{alloc.recipient.slice(-6)}
+                    <div className="text-[10px] text-[#737373]">
+                      Recipient: {alloc.recipient.slice(0, 6)}...{alloc.recipient.slice(-6)}
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Performance & Execution Health */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Activity className="h-4 w-4 text-emerald-600" />
-                <CardTitle className="text-base">Protocol Settlement Telemetry</CardTitle>
-              </div>
-              <CardDescription>
-                Soroban smart contract performance and ledger audit checks.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-xl border bg-slate-50 dark:bg-slate-900/50 space-y-2">
-                <div className="flex items-center justify-between font-semibold">
-                  <span>Cross-Contract Call Overhead</span>
-                  <Badge variant="success">&lt; 120ms</Badge>
+          {/* Settlement Protocol Verification */}
+          <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+                PROTOCOL AUDIT VERIFICATIONS
+              </span>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="border border-[#111111] p-4 bg-[#F5F5F5] space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>CROSS-CONTRACT OVERHEAD</span>
+                  <Badge variant="default">&lt; 120 MS</Badge>
                 </div>
-                <p className="text-muted-foreground text-[11px]">
-                  FamilyRegistry auth queries and rule validations executed atomically during deposit.
+                <p className="font-body text-xs text-[#525252]">
+                  Direct Soroban inter-contract call verifies auth and fetches rule in single invocation.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl border bg-slate-50 dark:bg-slate-900/50 space-y-2">
-                <div className="flex items-center justify-between font-semibold">
-                  <span>Arithmetic Dust &amp; Remainder Loss</span>
-                  <Badge variant="success">0 Stroops (Lossless)</Badge>
+              <div className="border border-[#111111] p-4 bg-[#F5F5F5] space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>ARITHMETIC DUST LOSS</span>
+                  <Badge variant="default">0 STROOPS</Badge>
                 </div>
-                <p className="text-muted-foreground text-[11px]">
-                  Deterministic remainder absorption guarantees 100.00% integer asset conservation.
+                <p className="font-body text-xs text-[#525252]">
+                  Exact integer remainder absorption eliminates financial rounding drift.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl border bg-slate-50 dark:bg-slate-900/50 space-y-2">
-                <div className="flex items-center justify-between font-semibold">
-                  <span>Idempotency Replay Protection</span>
-                  <Badge variant="stellar">Active</Badge>
+              <div className="border border-[#111111] p-4 bg-[#F5F5F5] space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>IDEMPOTENCY SAFE RETRIES</span>
+                  <Badge variant="editorial">ACTIVE</Badge>
                 </div>
-                <p className="text-muted-foreground text-[11px]">
-                  Recipient payouts state machine prevents double disbursements on retries.
+                <p className="font-body text-xs text-[#525252]">
+                  Individual recipient paid flags prevent double disbursements upon transaction replay.
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </AppShell>

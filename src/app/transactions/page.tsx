@@ -45,7 +45,6 @@ export default function TransactionsPage() {
     setRetryingHash(hash);
     updateStatus(hash, "PROCESSING");
 
-    // Simulate safe retry on-chain
     await new Promise((res) => setTimeout(res, 2000));
 
     updateStatus(hash, "CONFIRMED");
@@ -56,7 +55,7 @@ export default function TransactionsPage() {
       actor: "Sender",
       timestamp: Date.now(),
       txHash: hash,
-      details: `Safely retried and finalized pending recipient payouts for transaction ${hash.slice(0, 8)}...`,
+      details: `Safely retried pending beneficiary dispatches for tx ${hash.slice(0, 8)}...`,
     });
 
     setRetryingHash(null);
@@ -73,34 +72,34 @@ export default function TransactionsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-8 font-mono text-xs">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                Transaction Center
-              </h1>
-              <Badge variant="stellar">Lifecycle Tracked</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Authoritative on-chain transaction lifecycle states, cryptographic proofs, and retry controls.
+        <div className="border-b-4 border-[#111111] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+              PERMANENT LEDGER GAZETTE · AUDIT PROOFS
+            </span>
+            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+              Transaction Gazette
+            </h1>
+            <p className="font-body text-xs sm:text-sm text-[#525252]">
+              Cryptographic transaction lifecycle records, execution receipts, and safe retry controls.
             </p>
           </div>
         </div>
 
-        {/* Filter Controls Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
+        {/* Filter & Search Bar */}
+        <div className="border-2 border-[#111111] bg-[#F5F5F5] p-4 flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-1 w-full md:w-auto">
             {statusFilters.map((s) => (
               <button
                 key={s}
                 onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 font-bold uppercase tracking-wider transition-colors border ${
                   filterStatus === s
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "border-[#111111] bg-[#111111] text-[#F9F9F7]"
+                    : "border-transparent text-[#525252] hover:border-[#111111] hover:bg-[#E5E5E0]"
                 }`}
               >
                 {s}
@@ -108,11 +107,11 @@ export default function TransactionsPage() {
             ))}
           </div>
 
-          {/* Search Input */}
+          {/* Search */}
           <div className="w-full md:w-64 relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
             <Input
-              placeholder="Search by hash, type, family..."
+              placeholder="Search hash, type, family..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-xs"
@@ -121,78 +120,75 @@ export default function TransactionsPage() {
         </div>
 
         {/* Transactions Table */}
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Transaction Records ({filtered.length})</CardTitle>
-            <CardDescription>
-              Real-time ledger state for family deposits, rule activations, and payouts.
-            </CardDescription>
-          </CardHeader>
+        <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+          <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest font-bold text-[#111111]">
+              DISPATCH ENTRIES ({filtered.length})
+            </span>
+          </div>
 
-          <CardContent>
-            {filtered.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                No transaction records match the selected filter.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Family Group</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Transaction Hash</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center text-[#737373]">
+              No dispatch records match the selected criteria.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Operation Type</TableHead>
+                  <TableHead>Family Vault</TableHead>
+                  <TableHead>Volume</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>Ledger Time</TableHead>
+                  <TableHead>Transaction Hash</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((tx) => (
+                  <TableRow key={tx.hash}>
+                    <TableCell className="font-serif font-bold text-sm text-[#111111]">
+                      {tx.type.replace("_", " ")}
+                    </TableCell>
+                    <TableCell className="text-xs text-[#525252]">
+                      {tx.familyName || "Family #1"}
+                    </TableCell>
+                    <TableCell>
+                      {tx.amount ? (
+                        <AmountDisplay stroops={tx.amount} size="sm" />
+                      ) : (
+                        <span className="text-[#737373]">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={tx.status} />
+                    </TableCell>
+                    <TableCell className="text-xs text-[#737373]">
+                      {formatTimestamp(tx.createdAt)}
+                    </TableCell>
+                    <TableCell>
+                      <ExplorerLink type="tx" value={tx.hash} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {(tx.status === "RETRYABLE" || tx.status === "FAILED") && (
+                        <Button
+                          size="sm"
+                          variant="editorial"
+                          onClick={() => handleRetry(tx.hash)}
+                          disabled={retryingHash === tx.hash}
+                          className="text-[11px] h-7 px-3"
+                        >
+                          <RefreshCw className={`h-3 w-3 mr-1 ${retryingHash === tx.hash ? "animate-spin" : ""}`} />
+                          Retry
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((tx) => (
-                    <TableRow key={tx.hash}>
-                      <TableCell className="font-bold text-slate-900 dark:text-slate-100 text-xs">
-                        {tx.type.replace("_", " ")}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {tx.familyName || "Family #1"}
-                      </TableCell>
-                      <TableCell>
-                        {tx.amount ? (
-                          <AmountDisplay stroops={tx.amount} size="sm" />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={tx.status} />
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatTimestamp(tx.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <ExplorerLink type="tx" value={tx.hash} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {(tx.status === "RETRYABLE" || tx.status === "FAILED") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRetry(tx.hash)}
-                            disabled={retryingHash === tx.hash}
-                            className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <RefreshCw className={`h-3 w-3 mr-1 ${retryingHash === tx.hash ? "animate-spin" : ""}`} />
-                            Retry
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
     </AppShell>
   );
