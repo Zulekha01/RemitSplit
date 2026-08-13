@@ -2,7 +2,7 @@
 set -e
 
 NETWORK="${STELLAR_NETWORK:-testnet}"
-SOURCE_ACCOUNT="${STELLAR_ACCOUNT:-remitsplit-admin}"
+SOURCE_ACCOUNT="${STELLAR_ACCOUNT:-remitsplit_deployer}"
 
 REGISTRY_ID="${NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID}"
 DISTRIBUTION_ID="${NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID}"
@@ -21,7 +21,10 @@ echo "============================================="
 echo "Registry ID:     $REGISTRY_ID"
 echo "Distribution ID: $DISTRIBUTION_ID"
 
-DEPLOYER_PUBKEY=$(stellar keys address "$SOURCE_ACCOUNT")
+DEPLOYER_PUBKEY=$(stellar keys address "$SOURCE_ACCOUNT" 2>/dev/null | grep -oE 'G[A-Z0-9]{55}' | head -n 1)
+if [ -z "$DEPLOYER_PUBKEY" ]; then
+    DEPLOYER_PUBKEY=$(stellar -q keys address "$SOURCE_ACCOUNT")
+fi
 
 echo "1. Initializing FamilyRegistryContract..."
 stellar contract invoke \
