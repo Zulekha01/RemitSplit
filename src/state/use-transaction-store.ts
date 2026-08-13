@@ -19,8 +19,40 @@ interface TransactionStore {
   syncOnChainTransactions: () => Promise<void>;
 }
 
+const STORAGE_KEY = "remitsplit_txs_testnet";
+
+function loadStoredTransactions(): TransactionRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.map((t) => ({
+          ...t,
+          amount: t.amount ? BigInt(t.amount) : undefined,
+        }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredTransactions(txs: TransactionRecord[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const serializable = txs.slice(0, 100).map((t) => ({
+      ...t,
+      amount: t.amount ? t.amount.toString() : undefined,
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+  } catch {
+    // Ignore storage quota limits
+  }
+}
+
 export const useTransactionStore = create<TransactionStore>((set, get) => ({
-  transactions: [],
+  transactions: loadStoredTransactions(),
   filterStatus: "ALL",
   filterType: "ALL",
   isLoadingOnChain: false,
@@ -32,11 +64,6 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoadingOnChain: true });
     try {
       const count = await distributionContractService.fetchDistributionCount();
-      if (count === 0) {
-        set({ isLoadingOnChain: false });
-        return;
-      }
-
       const onChainDistributions: TransactionRecord[] = [];
 
       for (let id = 1; id <= count; id++) {
@@ -79,13 +106,17 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       }
 
       set((state) => {
-        // Merge with any client-submitted transactions that aren't yet in on-chain distributions
+        // Merge client-submitted transactions with on-chain indexed distributions
         const nonDistTx = state.transactions.filter(
-          (t) => t.type !== "DISTRIBUTE" || !onChainDistributions.some((d) => d.hash === t.hash || (d.distributionId && d.distributionId === t.distributionId))
+          (t) =>
+            t.type !== "DISTRIBUTE" ||
+            !onChainDistributions.some(
+              (d) => d.hash === t.hash || (d.distributionId && d.distributionId === t.distributionId)
+            )
         );
-        return {
-          transactions: [...nonDistTx, ...onChainDistributions].sort((a, b) => b.createdAt - a.createdAt),
-        };
+        const merged = [...nonDistTx, ...onChainDistributions].sort((a, b) => b.createdAt - a.createdAt);
+        saveStoredTransactions(merged);
+        return { transactions: merged };
       });
 
       logger.info("TxStore", `Synced ${onChainDistributions.length} on-chain distributions`);
@@ -102,16 +133,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       explorerUrl: getExplorerUrl("tx", tx.hash),
     };
 
-    set((state) => ({
-      transactions: [fullTx, ...state.transactions.filter((t) => t.hash !== tx.hash)],
-    }));
+    set((state) => {
+      const updated = [fullTx, ...state.transactions.filter((t) => t.hash !== tx.hash)];
+      saveStoredTransactions(updated);
+      return { transactions: updated };
+    });
 
     logger.info("TxStore", `New transaction recorded: ${tx.type} (${tx.hash})`);
   },
 
   updateStatus: (hash, status, error) => {
-    set((state) => ({
-      transactions: state.transactions.map((tx) =>
+    set((state) => {
+      const updated = state.transactions.map((tx) =>
         tx.hash === hash
           ? {
               ...tx,
@@ -120,8 +153,10 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
               updatedAt: Date.now(),
             }
           : tx
-      ),
-    }));
+      );
+      saveStoredTransactions(updated);
+      return { transactions: updated };
+    });
 
     logger.info("TxStore", `Transaction ${hash} transitioned to ${status}`);
   },

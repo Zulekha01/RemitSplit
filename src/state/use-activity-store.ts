@@ -21,8 +21,40 @@ const REGISTRY_CONTRACT_ID =
 const DISTRIBUTION_CONTRACT_ID =
   process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || "CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72";
 
+const ACTIVITY_STORAGE_KEY = "remitsplit_activity_testnet";
+
+function loadStoredEvents(): ActivityEvent[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.map((e) => ({
+          ...e,
+          amount: e.amount ? BigInt(e.amount) : undefined,
+        }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredEvents(events: ActivityEvent[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const serializable = events.slice(0, 100).map((e) => ({
+      ...e,
+      amount: e.amount ? e.amount.toString() : undefined,
+    }));
+    localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(serializable));
+  } catch {
+    // Ignore storage quota limits
+  }
+}
+
 export const useActivityStore = create<ActivityStore>((set, get) => ({
-  events: [],
+  events: loadStoredEvents(),
   filterType: "ALL",
   isLoadingOnChain: false,
 
@@ -46,8 +78,10 @@ export const useActivityStore = create<ActivityStore>((set, get) => ({
         set((state) => {
           const existingIds = new Set(state.events.map((e) => e.id));
           const newEvents = decodedEvents.filter((e) => !existingIds.has(e.id));
+          const merged = [...newEvents, ...state.events].sort((a, b) => b.timestamp - a.timestamp);
+          saveStoredEvents(merged);
           return {
-            events: [...newEvents, ...state.events].sort((a, b) => b.timestamp - a.timestamp),
+            events: merged,
           };
         });
 
@@ -63,11 +97,19 @@ export const useActivityStore = create<ActivityStore>((set, get) => ({
   addEvent: (event) => {
     set((state) => {
       // Prevent duplicate events
-      if (state.events.some((e) => e.id === event.id || (e.txHash && e.txHash === event.txHash && e.type === event.type))) {
+      if (
+        state.events.some(
+          (e) =>
+            e.id === event.id ||
+            (e.txHash && e.txHash === event.txHash && e.type === event.type)
+        )
+      ) {
         return state;
       }
+      const updated = [event, ...state.events];
+      saveStoredEvents(updated);
       return {
-        events: [event, ...state.events],
+        events: updated,
       };
     });
     logger.info("ActivityStore", `New event recorded: ${event.type}`);

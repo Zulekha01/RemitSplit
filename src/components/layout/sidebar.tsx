@@ -57,18 +57,27 @@ export function Sidebar() {
             onChange={(e) => selectFamily(Number(e.target.value))}
             className="w-full text-xs font-mono font-bold rounded-none border-2 border-[#111111] bg-[#F9F9F7] px-2 py-1 text-[#111111] focus:outline-none focus:bg-white"
           >
-            <option value={0}>
-              {!isConnected
-                ? "— Connect Wallet First —"
-                : userFamilies.length === 0
-                ? "— No Vaults Found —"
-                : "— Select Family Vault —"}
-            </option>
-            {userFamilies.map((f) => (
-              <option key={f.id} value={f.id}>
-                #{f.id} · {f.name}
-              </option>
-            ))}
+            {families.length === 0 ? (
+              <option value={0}>— Loading On-Chain Vaults —</option>
+            ) : null}
+            {userFamilies.length > 0 && (
+              <optgroup label="MY AUTHORIZED VAULTS">
+                {userFamilies.map((f) => (
+                  <option key={`my-${f.id}`} value={f.id}>
+                    #{f.id} · {f.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {families.length > 0 && (
+              <optgroup label="ON-CHAIN VAULTS DIRECTORY">
+                {families.map((f) => (
+                  <option key={`all-${f.id}`} value={f.id}>
+                    #{f.id} · {f.name} {address && f.owner === address ? "(Owner)" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 

@@ -110,10 +110,15 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
         set((state) => ({
           families: loadedFamilies,
           rules: loadedRules,
-          selectedFamilyId:
-            state.selectedFamilyId > 0 && loadedFamilies.some((f) => f.id === state.selectedFamilyId)
-              ? state.selectedFamilyId
-              : 0,
+          selectedFamilyId: (() => {
+            if (state.selectedFamilyId > 0 && loadedFamilies.some((f) => f.id === state.selectedFamilyId)) {
+              return state.selectedFamilyId;
+            }
+            if (loadedFamilies.length > 0) {
+              return loadedFamilies[0].id;
+            }
+            return 0;
+          })(),
         }));
         logger.info("FamilyStore", `Synced ${loadedFamilies.length} families from on-chain contract`);
       }
