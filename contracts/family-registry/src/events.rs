@@ -1,5 +1,5 @@
-use soroban_sdk::{symbol_short, Address, Env, String};
 use crate::types::{AllocationStrategy, Role};
+use soroban_sdk::{symbol_short, Address, Env, String};
 
 #[allow(deprecated)]
 pub fn emit_family_created(env: &Env, family_id: u32, owner: &Address, name: &String) {

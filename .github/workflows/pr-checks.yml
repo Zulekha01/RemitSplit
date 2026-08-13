@@ -1,4 +1,4 @@
-name: RemitSplit CI/CD Pipeline
+name: PR Checks
 
 on:
   push:
@@ -7,12 +7,12 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pr-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  contracts:
-    name: Soroban Smart Contracts (Build & Test)
+  contracts-fmt-clippy:
+    name: Contracts — fmt · clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -27,22 +27,14 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Rust Format Check
+      - name: Format Check (cargo fmt)
         run: cargo fmt --all -- --check
 
-      - name: Run Soroban Contract Tests
-        run: cargo test --workspace --verbose
+      - name: Lint Check (cargo clippy)
+        run: cargo clippy --all-targets -- -D warnings
 
-      - name: Install Stellar CLI
-        run: |
-          cargo install --locked stellar-cli --features opt
-
-      - name: Build Contract WASM Artifacts
-        run: |
-          stellar contract build
-
-  frontend:
-    name: Frontend Dapp (Typecheck, Test & Build)
+  frontend-typecheck-lint-build:
+    name: Frontend — typecheck · lint · build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -64,14 +56,14 @@ jobs:
       - name: TypeScript Typecheck
         run: pnpm typecheck
 
-      - name: Run Frontend Tests (Vitest)
-        run: pnpm test
+      - name: ESLint Check
+        run: pnpm lint
 
-      - name: Build Next.js Production Dapp
+      - name: Next.js Production Build
         run: pnpm build
         env:
           NEXT_PUBLIC_STELLAR_NETWORK: testnet
           NEXT_PUBLIC_STELLAR_RPC_URL: https://soroban-testnet.stellar.org
-          NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-          NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID: CBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+          NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID: CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD
+          NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID: CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72
           NEXT_PUBLIC_NATIVE_ASSET_CONTRACT_ID: CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC

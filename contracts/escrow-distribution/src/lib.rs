@@ -10,13 +10,13 @@ pub mod types;
 #[cfg(test)]
 mod test;
 
-use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
 use crate::calculator::calculate_payouts;
 use crate::errors::ContractError;
 use crate::events::*;
 use crate::registry_client::FamilyRegistryClient;
 use crate::storage::*;
 use crate::types::*;
+use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
 
 #[contract]
 pub struct EscrowDistributionContract;
@@ -24,7 +24,11 @@ pub struct EscrowDistributionContract;
 #[contractimpl]
 impl EscrowDistributionContract {
     /// Initialize the EscrowDistribution contract with an admin and the FamilyRegistry contract address.
-    pub fn initialize(env: Env, admin: Address, registry_contract: Address) -> Result<(), ContractError> {
+    pub fn initialize(
+        env: Env,
+        admin: Address,
+        registry_contract: Address,
+    ) -> Result<(), ContractError> {
         if get_admin(&env).is_some() {
             return Err(ContractError::AlreadyInitialized);
         }
@@ -35,7 +39,11 @@ impl EscrowDistributionContract {
     }
 
     /// Update the linked FamilyRegistry contract address (Admin only).
-    pub fn update_registry_contract(env: Env, caller: Address, new_registry: Address) -> Result<(), ContractError> {
+    pub fn update_registry_contract(
+        env: Env,
+        caller: Address,
+        new_registry: Address,
+    ) -> Result<(), ContractError> {
         let admin = get_admin(&env).ok_or(ContractError::NotInitialized)?;
         if caller != admin {
             return Err(ContractError::Unauthorized);
@@ -59,7 +67,8 @@ impl EscrowDistributionContract {
             return Err(ContractError::InvalidAmount);
         }
 
-        let registry_addr = get_registry_contract(&env).ok_or(ContractError::NoRegistryConfigured)?;
+        let registry_addr =
+            get_registry_contract(&env).ok_or(ContractError::NoRegistryConfigured)?;
         let registry_client = FamilyRegistryClient::new(&env, &registry_addr);
 
         // RBAC: Verify sender is the registered family owner/sender via cross-contract call
@@ -77,7 +86,8 @@ impl EscrowDistributionContract {
 
         // Transfer funds from sender to contract escrow
         let token_client = soroban_sdk::token::Client::new(&env, &token);
-        token_client.transfer(&sender, &env.current_contract_address(), &gross_amount);
+        let contract_address = env.current_contract_address();
+        token_client.transfer(&sender, &contract_address, &gross_amount);
 
         emit_deposit_funded(&env, dist_id, family_id, gross_amount);
 
@@ -94,9 +104,14 @@ impl EscrowDistributionContract {
         for i in 0..recipient_count {
             let mut payout = calculated_payouts.get(i).unwrap();
             if payout.amount > 0 {
-                token_client.transfer(&env.current_contract_address(), &payout.recipient, &payout.amount);
+                token_client.transfer(
+                    &env.current_contract_address(),
+                    &payout.recipient,
+                    &payout.amount,
+                );
                 payout.paid = true;
-                total_distributed = total_distributed.checked_add(payout.amount)
+                total_distributed = total_distributed
+                    .checked_add(payout.amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
                 emit_recipient_paid(&env, dist_id, &payout.recipient, payout.amount);
             } else {
@@ -141,7 +156,8 @@ impl EscrowDistributionContract {
             return Err(ContractError::InvalidAmount);
         }
 
-        let registry_addr = get_registry_contract(&env).ok_or(ContractError::NoRegistryConfigured)?;
+        let registry_addr =
+            get_registry_contract(&env).ok_or(ContractError::NoRegistryConfigured)?;
         let registry_client = FamilyRegistryClient::new(&env, &registry_addr);
 
         if !registry_client.validate_family_sender(&family_id, &sender) {
@@ -154,7 +170,8 @@ impl EscrowDistributionContract {
         let timestamp = env.ledger().timestamp();
 
         let token_client = soroban_sdk::token::Client::new(&env, &token);
-        token_client.transfer(&sender, &env.current_contract_address(), &gross_amount);
+        let contract_address = env.current_contract_address();
+        token_client.transfer(&sender, &contract_address, &gross_amount);
 
         let payouts = calculate_payouts(&env, &active_rule, gross_amount)?;
 
@@ -190,13 +207,16 @@ impl EscrowDistributionContract {
     ) -> Result<DistributionStatus, ContractError> {
         caller.require_auth();
 
-        let mut record = get_distribution(&env, distribution_id).ok_or(ContractError::DistributionNotFound)?;
+        let mut record =
+            get_distribution(&env, distribution_id).ok_or(ContractError::DistributionNotFound)?;
 
         if record.status == DistributionStatus::Completed {
             return Err(ContractError::DistributionAlreadyCompleted);
         }
 
-        if record.status != DistributionStatus::Funded && record.status != DistributionStatus::Retryable {
+        if record.status != DistributionStatus::Funded
+            && record.status != DistributionStatus::Retryable
+        {
             return Err(ContractError::InvalidDistributionState);
         }
 
@@ -211,9 +231,14 @@ impl EscrowDistributionContract {
         for i in 0..count {
             let mut payout = record.payouts.get(i).unwrap();
             if !payout.paid && payout.amount > 0 {
-                token_client.transfer(&env.current_contract_address(), &payout.recipient, &payout.amount);
+                token_client.transfer(
+                    &env.current_contract_address(),
+                    &payout.recipient,
+                    &payout.amount,
+                );
                 payout.paid = true;
-                total_distributed = total_distributed.checked_add(payout.amount)
+                total_distributed = total_distributed
+                    .checked_add(payout.amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
                 emit_recipient_paid(&env, distribution_id, &payout.recipient, payout.amount);
             } else {
@@ -241,7 +266,8 @@ impl EscrowDistributionContract {
     ) -> Result<DistributionStatus, ContractError> {
         caller.require_auth();
 
-        let mut record = get_distribution(&env, distribution_id).ok_or(ContractError::DistributionNotFound)?;
+        let mut record =
+            get_distribution(&env, distribution_id).ok_or(ContractError::DistributionNotFound)?;
 
         if record.status == DistributionStatus::Completed {
             return Err(ContractError::DistributionAlreadyCompleted);
@@ -257,9 +283,14 @@ impl EscrowDistributionContract {
         for i in 0..count {
             let mut payout = record.payouts.get(i).unwrap();
             if !payout.paid && payout.amount > 0 {
-                token_client.transfer(&env.current_contract_address(), &payout.recipient, &payout.amount);
+                token_client.transfer(
+                    &env.current_contract_address(),
+                    &payout.recipient,
+                    &payout.amount,
+                );
                 payout.paid = true;
-                total_distributed = total_distributed.checked_add(payout.amount)
+                total_distributed = total_distributed
+                    .checked_add(payout.amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
                 emit_recipient_paid(&env, distribution_id, &payout.recipient, payout.amount);
             }
@@ -288,7 +319,10 @@ impl EscrowDistributionContract {
     }
 
     /// Retrieve a distribution record by ID.
-    pub fn get_distribution(env: Env, distribution_id: u32) -> Result<DistributionRecord, ContractError> {
+    pub fn get_distribution(
+        env: Env,
+        distribution_id: u32,
+    ) -> Result<DistributionRecord, ContractError> {
         get_distribution(&env, distribution_id).ok_or(ContractError::DistributionNotFound)
     }
 

@@ -1,5 +1,5 @@
-use soroban_sdk::{contractclient, Address, Env};
 use crate::types::AllocationRule;
+use soroban_sdk::{contractclient, Address, Env};
 
 #[contractclient(name = "FamilyRegistryClient")]
 pub trait FamilyRegistryInterface {

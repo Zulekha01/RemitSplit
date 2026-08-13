@@ -1,5 +1,5 @@
-use soroban_sdk::{symbol_short, Address, Env};
 use crate::types::DistributionStatus;
+use soroban_sdk::{symbol_short, Address, Env};
 
 #[allow(deprecated)]
 pub fn emit_deposit_created(
@@ -15,12 +15,7 @@ pub fn emit_deposit_created(
 }
 
 #[allow(deprecated)]
-pub fn emit_deposit_funded(
-    env: &Env,
-    distribution_id: u32,
-    family_id: u32,
-    amount: i128,
-) {
+pub fn emit_deposit_funded(env: &Env, distribution_id: u32, family_id: u32, amount: i128) {
     let topics = (symbol_short!("dep_fund"), distribution_id, family_id);
     env.events().publish(topics, amount);
 }
@@ -37,13 +32,12 @@ pub fn emit_distribution_started(
 }
 
 #[allow(deprecated)]
-pub fn emit_recipient_paid(
-    env: &Env,
-    distribution_id: u32,
-    recipient: &Address,
-    amount: i128,
-) {
-    let topics = (symbol_short!("rec_paid"), distribution_id, recipient.clone());
+pub fn emit_recipient_paid(env: &Env, distribution_id: u32, recipient: &Address, amount: i128) {
+    let topics = (
+        symbol_short!("rec_paid"),
+        distribution_id,
+        recipient.clone(),
+    );
     env.events().publish(topics, amount);
 }
 
@@ -59,12 +53,7 @@ pub fn emit_distribution_completed(
 }
 
 #[allow(deprecated)]
-pub fn emit_distribution_partial(
-    env: &Env,
-    distribution_id: u32,
-    family_id: u32,
-    paid_count: u32,
-) {
+pub fn emit_distribution_partial(env: &Env, distribution_id: u32, family_id: u32, paid_count: u32) {
     let topics = (symbol_short!("dist_part"), distribution_id, family_id);
     env.events().publish(topics, paid_count);
 }

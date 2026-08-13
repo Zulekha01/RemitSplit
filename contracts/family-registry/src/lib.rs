@@ -8,11 +8,11 @@ pub mod types;
 #[cfg(test)]
 mod test;
 
-use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 use crate::errors::ContractError;
 use crate::events::*;
 use crate::storage::*;
 use crate::types::*;
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 
 pub const BASIS_POINTS_100_PERCENT: i128 = 10_000;
 
@@ -79,7 +79,8 @@ impl FamilyRegistryContract {
         caller.require_auth();
 
         let _family = get_family(&env, family_id).ok_or(ContractError::FamilyNotFound)?;
-        let caller_member = get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
+        let caller_member =
+            get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
 
         // RBAC: Only Sender (Owner) or CoAdmin can add members.
         // CoAdmin can ONLY add Recipients; only Owner can add CoAdmins or Senders.
@@ -128,8 +129,10 @@ impl FamilyRegistryContract {
             return Err(ContractError::CannotRemoveOwner);
         }
 
-        let caller_member = get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
-        let target_member = get_member(&env, family_id, &member).ok_or(ContractError::MemberNotFound)?;
+        let caller_member =
+            get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
+        let target_member =
+            get_member(&env, family_id, &member).ok_or(ContractError::MemberNotFound)?;
 
         // RBAC Check
         match caller_member.role {
@@ -168,7 +171,8 @@ impl FamilyRegistryContract {
         caller.require_auth();
 
         let _family = get_family(&env, family_id).ok_or(ContractError::FamilyNotFound)?;
-        let caller_member = get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
+        let caller_member =
+            get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
 
         if caller_member.role != Role::Sender && caller_member.role != Role::CoAdmin {
             return Err(ContractError::Unauthorized);
@@ -254,7 +258,8 @@ impl FamilyRegistryContract {
         caller.require_auth();
 
         let mut family = get_family(&env, family_id).ok_or(ContractError::FamilyNotFound)?;
-        let caller_member = get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
+        let caller_member =
+            get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
 
         // Only Family Owner / Sender can activate rules
         if caller_member.role != Role::Sender {
@@ -282,15 +287,12 @@ impl FamilyRegistryContract {
     }
 
     /// Deactivate the active rule for a family.
-    pub fn deactivate_rule(
-        env: Env,
-        caller: Address,
-        family_id: u32,
-    ) -> Result<(), ContractError> {
+    pub fn deactivate_rule(env: Env, caller: Address, family_id: u32) -> Result<(), ContractError> {
         caller.require_auth();
 
         let mut family = get_family(&env, family_id).ok_or(ContractError::FamilyNotFound)?;
-        let caller_member = get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
+        let caller_member =
+            get_member(&env, family_id, &caller).ok_or(ContractError::Unauthorized)?;
 
         if caller_member.role != Role::Sender {
             return Err(ContractError::Unauthorized);
@@ -323,7 +325,11 @@ impl FamilyRegistryContract {
     }
 
     /// Retrieve a specific historical rule version for a family.
-    pub fn get_rule(env: Env, family_id: u32, version: u32) -> Result<AllocationRule, ContractError> {
+    pub fn get_rule(
+        env: Env,
+        family_id: u32,
+        version: u32,
+    ) -> Result<AllocationRule, ContractError> {
         get_rule(&env, family_id, version).ok_or(ContractError::RuleNotFound)
     }
 

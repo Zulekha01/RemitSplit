@@ -37,6 +37,7 @@ describe("On-Chain Stores Initial State & Zero-Mock Guarantee", () => {
           id: 1,
           name: "Aalmi Global Family",
           owner: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
+          activeRuleVersion: 0,
           createdAt: Date.now(),
           members: [],
         },

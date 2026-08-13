@@ -1,6 +1,6 @@
-use soroban_sdk::{Env, Vec};
 use crate::errors::ContractError;
 use crate::types::{AllocationRule, AllocationStrategy, RecipientPayout};
+use soroban_sdk::{Env, Vec};
 
 pub const BASIS_POINTS_TOTAL: i128 = 10_000;
 
@@ -28,15 +28,18 @@ pub fn calculate_payouts(
                 let item = rule.allocations.get(i).unwrap();
                 let amount = if i == count - 1 {
                     // Last recipient receives the remaining balance to guarantee 100% distribution
-                    gross_amount.checked_sub(allocated_so_far)
+                    gross_amount
+                        .checked_sub(allocated_so_far)
                         .ok_or(ContractError::AllocationCalculationFailed)?
                 } else {
-                    let product = gross_amount.checked_mul(item.share_or_amount)
+                    let product = gross_amount
+                        .checked_mul(item.share_or_amount)
                         .ok_or(ContractError::AllocationCalculationFailed)?;
                     product / BASIS_POINTS_TOTAL
                 };
 
-                allocated_so_far = allocated_so_far.checked_add(amount)
+                allocated_so_far = allocated_so_far
+                    .checked_add(amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
 
                 payouts.push_back(RecipientPayout {
@@ -52,7 +55,8 @@ pub fn calculate_payouts(
 
             for i in 0..count {
                 let item = rule.allocations.get(i).unwrap();
-                total_fixed = total_fixed.checked_add(item.share_or_amount)
+                total_fixed = total_fixed
+                    .checked_add(item.share_or_amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
 
                 payouts.push_back(RecipientPayout {
@@ -87,7 +91,8 @@ pub fn calculate_payouts(
                     }
                 };
 
-                remaining_balance = remaining_balance.checked_sub(payout_amount)
+                remaining_balance = remaining_balance
+                    .checked_sub(payout_amount)
                     .ok_or(ContractError::AllocationCalculationFailed)?;
 
                 payouts.push_back(RecipientPayout {

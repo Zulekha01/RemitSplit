@@ -1,10 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{
-    testutils::Address as _,
-    vec, Address, Env, String,
-};
+use soroban_sdk::{testutils::Address as _, vec, Address, Env, String};
 
 fn setup_test() -> (Env, Address, FamilyRegistryContractClient<'static>) {
     let env = Env::default();
@@ -99,8 +96,20 @@ fn test_rbac_restrictions() {
     let recipient = Address::generate(&env);
     let unauthorized_user = Address::generate(&env);
 
-    client.add_member(&owner, &family_id, &co_admin, &Role::CoAdmin, &String::from_str(&env, "CoAdmin"));
-    client.add_member(&owner, &family_id, &recipient, &Role::Recipient, &String::from_str(&env, "Recipient"));
+    client.add_member(
+        &owner,
+        &family_id,
+        &co_admin,
+        &Role::CoAdmin,
+        &String::from_str(&env, "CoAdmin"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &recipient,
+        &Role::Recipient,
+        &String::from_str(&env, "Recipient"),
+    );
 
     // CoAdmin cannot add another CoAdmin
     let other_admin = Address::generate(&env);
@@ -149,9 +158,27 @@ fn test_create_and_activate_percentage_rule() {
     let sibling = Address::generate(&env);
     let dependent = Address::generate(&env);
 
-    client.add_member(&owner, &family_id, &parent, &Role::Recipient, &String::from_str(&env, "Parent"));
-    client.add_member(&owner, &family_id, &sibling, &Role::Recipient, &String::from_str(&env, "Sibling"));
-    client.add_member(&owner, &family_id, &dependent, &Role::Recipient, &String::from_str(&env, "Dependent"));
+    client.add_member(
+        &owner,
+        &family_id,
+        &parent,
+        &Role::Recipient,
+        &String::from_str(&env, "Parent"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &sibling,
+        &Role::Recipient,
+        &String::from_str(&env, "Sibling"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &dependent,
+        &Role::Recipient,
+        &String::from_str(&env, "Dependent"),
+    );
 
     // 50% (5000 bps), 30% (3000 bps), 20% (2000 bps)
     let allocations = vec![
@@ -173,7 +200,12 @@ fn test_create_and_activate_percentage_rule() {
         },
     ];
 
-    let version = client.create_rule(&owner, &family_id, &AllocationStrategy::Percentage, &allocations);
+    let version = client.create_rule(
+        &owner,
+        &family_id,
+        &AllocationStrategy::Percentage,
+        &allocations,
+    );
     assert_eq!(version, 1);
 
     let rule = client.get_rule(&family_id, &version);
@@ -201,8 +233,20 @@ fn test_invalid_allocation_validation() {
     let sibling = Address::generate(&env);
     let non_member = Address::generate(&env);
 
-    client.add_member(&owner, &family_id, &parent, &Role::Recipient, &String::from_str(&env, "Parent"));
-    client.add_member(&owner, &family_id, &sibling, &Role::Recipient, &String::from_str(&env, "Sibling"));
+    client.add_member(
+        &owner,
+        &family_id,
+        &parent,
+        &Role::Recipient,
+        &String::from_str(&env, "Parent"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &sibling,
+        &Role::Recipient,
+        &String::from_str(&env, "Sibling"),
+    );
 
     // Case 1: Total != 10,000 bps (e.g. 5000 + 3000 = 8000)
     let invalid_total = vec![
@@ -218,7 +262,12 @@ fn test_invalid_allocation_validation() {
             label: String::from_str(&env, "Sibling"),
         },
     ];
-    let res = client.try_create_rule(&owner, &family_id, &AllocationStrategy::Percentage, &invalid_total);
+    let res = client.try_create_rule(
+        &owner,
+        &family_id,
+        &AllocationStrategy::Percentage,
+        &invalid_total,
+    );
     assert!(res.is_err());
 
     // Case 2: Non-member recipient
@@ -235,7 +284,12 @@ fn test_invalid_allocation_validation() {
             label: String::from_str(&env, "Stranger"),
         },
     ];
-    let res = client.try_create_rule(&owner, &family_id, &AllocationStrategy::Percentage, &non_member_alloc);
+    let res = client.try_create_rule(
+        &owner,
+        &family_id,
+        &AllocationStrategy::Percentage,
+        &non_member_alloc,
+    );
     assert!(res.is_err());
 
     // Case 3: Duplicate recipient
@@ -252,6 +306,11 @@ fn test_invalid_allocation_validation() {
             label: String::from_str(&env, "Parent 2"),
         },
     ];
-    let res = client.try_create_rule(&owner, &family_id, &AllocationStrategy::Percentage, &dup_alloc);
+    let res = client.try_create_rule(
+        &owner,
+        &family_id,
+        &AllocationStrategy::Percentage,
+        &dup_alloc,
+    );
     assert!(res.is_err());
 }
