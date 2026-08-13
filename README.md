@@ -333,16 +333,29 @@ stellar contract invoke \
 
 ## 📜 Contract Addresses & Testnet Transactions
 
-### Testnet Deployments
+### Live Testnet Deployments
 
 | Component | Identifier / Address | Explorer Link |
 | :--- | :--- | :--- |
-| **Family Registry Contract** | `CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` *(or deployed ID from script)* | [View Registry on StellarExpert](https://stellar.expert/explorer/testnet) |
-| **Escrow Distribution Contract** | `CBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB` *(or deployed ID from script)* | [View Escrow on StellarExpert](https://stellar.expert/explorer/testnet) |
+| **Family Registry Contract** | `CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD` | [View Registry on StellarExpert](https://stellar.expert/explorer/testnet/contract/CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD) |
+| **Escrow Distribution Contract** | `CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72` | [View Escrow on StellarExpert](https://stellar.expert/explorer/testnet/contract/CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72) |
 | **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [View SAC on StellarExpert](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
+### Verified On-Chain Transactions (Stellar Testnet)
+
+| Operation | Transaction Hash | Ledger | Status |
+| :--- | :--- | :--- | :--- |
+| **Registry Contract Init** | [`e057aa35bbac22ad...`](https://stellar.expert/explorer/testnet/tx/e057aa35bbac22ad923c8aae2ac4ed9eeff15f1bb244ecd7229d0a80805192b6) | 4435288 | Confirmed |
+| **Escrow Contract Init** | [`c83d57885eb75ad5...`](https://stellar.expert/explorer/testnet/tx/c83d57885eb75ad551aae809c701ca9d915cf7c74526a21df939428dd066a7b8) | 4435290 | Confirmed |
+| **Create Family (Aalmi Group)** | [`38a736f3ea798957...`](https://stellar.expert/explorer/testnet/tx/38a736f3ea7989575cd45cca403ad5420448ed25a7e5f7abf9223c441ef2c5ae) | 4435307 | Confirmed |
+| **Add Member (Sister Co-Admin)** | [`3a1ccf30f2945ad7...`](https://stellar.expert/explorer/testnet/tx/3a1ccf30f2945ad72b3fb09ae31ab15da640b7d0f4c32a93ab604befd5e541fd) | 4435309 | Confirmed |
+| **Add Member (Mother Recipient)** | [`745e118c1a26c30f...`](https://stellar.expert/explorer/testnet/tx/745e118c1a26c30f41c3444bdf2df555894201eb57fdfec23497029fb331aefa) | 4435312 | Confirmed |
+| **Create Split Rule v1 (50/50)** | [`2c6cae3683d85434...`](https://stellar.expert/explorer/testnet/tx/2c6cae3683d854340696483ad4225f8cdf07352e1505717287780a423e496b73) | 4435315 | Confirmed |
+| **Activate Rule Version 1** | [`67c72501e9a135a7...`](https://stellar.expert/explorer/testnet/tx/67c72501e9a135a7563a6b3db2de4c7ab5c2bc9e6754fc4bb204d63e1c5bedcb) | 4435318 | Confirmed |
+| **Deposit & Atomic Split** | [`7fe7159c3f618393...`](https://stellar.expert/explorer/testnet/tx/7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca) | 4435322 | Confirmed |
+
 > [!NOTE]
-> When executing `./scripts/deploy-testnet.sh`, your generated contract IDs and example remittance transaction hash will be automatically output and updated into `.env.local`.
+> When executing `./scripts/deploy-testnet.sh`, the newly deployed contract IDs are automatically configured into `.env.local` and `.env.example`.
 
 ---
 

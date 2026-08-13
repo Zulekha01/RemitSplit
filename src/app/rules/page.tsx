@@ -22,8 +22,9 @@ import { AddressPill } from "@/components/shared/address-pill";
 import { formatTimestamp, bpsToPercentage, stroopsToXlm } from "@/lib/formatters";
 
 export default function RulesPage() {
-  const { families, selectedFamilyId, rules, getSelectedFamily, activateRule, deactivateRule } = useFamilyStore();
-  const { address } = useWalletStore();
+  const { families, selectedFamilyId, getSelectedFamily, rules, activateRule, deactivateRule, syncOnChainState } =
+    useFamilyStore();
+  const { address, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
@@ -32,20 +33,26 @@ export default function RulesPage() {
 
   const [loadingVersion, setLoadingVersion] = useState<number | null>(null);
 
+  React.useEffect(() => {
+    syncOnChainState(selectedFamilyId);
+  }, [selectedFamilyId, syncOnChainState]);
+
   const handleActivate = async (version: number) => {
     if (!family) return;
     setLoadingVersion(version);
     try {
-      await activateRule(family.id, version);
+      const caller = address || family.owner;
+      const signerOpts = getSignerOptions();
+      const hash = await activateRule(family.id, version, caller, signerOpts);
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "ACTIVATE_RULE",
         status: "CONFIRMED",
         familyId: family.id,
         familyName: family.name,
-        depositor: address || family.owner,
+        depositor: caller,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -54,11 +61,13 @@ export default function RulesPage() {
         id: `evt-${Date.now()}`,
         type: "RULE_ACTIVATED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: caller,
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Activated Rule Version ${version} for ${family.name}`,
+        txHash,
+        details: `Activated Rule Version ${version} for ${family.name} on Stellar Testnet`,
       });
+
+      await syncOnChainState(family.id);
     } finally {
       setLoadingVersion(null);
     }
@@ -67,16 +76,18 @@ export default function RulesPage() {
   const handleDeactivate = async () => {
     if (!family) return;
     if (confirm("Are you sure you want to deactivate the active rule? Deposits will be paused until a new rule is activated.")) {
-      await deactivateRule(family.id);
+      const caller = address || family.owner;
+      const signerOpts = getSignerOptions();
+      const hash = await deactivateRule(family.id, caller, signerOpts);
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "ACTIVATE_RULE",
         status: "CONFIRMED",
         familyId: family.id,
         familyName: family.name,
-        depositor: address || family.owner,
+        depositor: caller,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -85,11 +96,13 @@ export default function RulesPage() {
         id: `evt-${Date.now()}`,
         type: "RULE_DEACTIVATED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: caller,
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Deactivated active rule for ${family.name}`,
+        txHash,
+        details: `Deactivated active rule for ${family.name} on Stellar Testnet`,
       });
+
+      await syncOnChainState(family.id);
     }
   };
 

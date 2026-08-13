@@ -33,8 +33,8 @@ interface BuilderItem {
 
 export default function RuleBuilderPage() {
   const router = useRouter();
-  const { families, selectedFamilyId, getSelectedFamily, createRule, activateRule } = useFamilyStore();
-  const { address } = useWalletStore();
+  const { families, selectedFamilyId, getSelectedFamily, createRule, activateRule, syncOnChainState } = useFamilyStore();
+  const { address, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
@@ -51,13 +51,8 @@ export default function RuleBuilderPage() {
     },
     {
       recipient: recipientMembers[1]?.address || members[1]?.address || "",
-      amountStr: "30",
-      label: "Sibling Tuition",
-    },
-    {
-      recipient: recipientMembers[2]?.address || members[2]?.address || "",
-      amountStr: "20",
-      label: "Emergency Reserve",
+      amountStr: "50",
+      label: "Sibling Education",
     },
   ]);
 
@@ -65,16 +60,29 @@ export default function RuleBuilderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Live Math Validation
+  // Validation
   let isValid = true;
   let validationMessage = "";
 
+  if (items.length === 0) {
+    isValid = false;
+    validationMessage = "At least one recipient allocation must be specified.";
+  }
+
+  const hasEmptyRecipient = items.some((it) => !it.recipient);
+  if (hasEmptyRecipient) {
+    isValid = false;
+    validationMessage = "All allocation rows must have an assigned family beneficiary.";
+  }
+
   if (strategy === "Percentage") {
-    const totalPct = items.reduce((acc, it) => acc + (parseFloat(it.amountStr) || 0), 0);
-    const roundedTotal = Math.round(totalPct * 100) / 100;
-    if (Math.abs(roundedTotal - 100) > 0.001) {
+    const totalPercentage = items.reduce(
+      (acc, it) => acc + (parseFloat(it.amountStr) || 0),
+      0
+    );
+    if (Math.abs(totalPercentage - 100) > 0.001) {
       isValid = false;
-      validationMessage = `Total allocation is currently ${roundedTotal}% (Must equal exactly 100.00%).`;
+      validationMessage = `Total percentage must sum to exactly 100.00% (currently ${totalPercentage.toFixed(2)}%).`;
     }
   } else if (strategy === "FixedAmount") {
     const hasZero = items.some((it) => (parseFloat(it.amountStr) || 0) <= 0);
@@ -125,6 +133,7 @@ export default function RuleBuilderPage() {
 
     try {
       const creator = address || family.owner;
+      const signerOpts = getSignerOptions();
 
       const formattedAllocations: AllocationItem[] = items.map((it) => {
         if (strategy === "Percentage") {
@@ -151,15 +160,22 @@ export default function RuleBuilderPage() {
         }
       });
 
-      const newVersion = await createRule(family.id, strategy, formattedAllocations, creator);
+      const { version: newVersion, hash: createHash } = await createRule(
+        family.id,
+        strategy,
+        formattedAllocations,
+        creator,
+        signerOpts
+      );
 
+      let activeHash: string | undefined;
       if (autoActivate) {
-        await activateRule(family.id, newVersion);
+        activeHash = await activateRule(family.id, newVersion, creator, signerOpts);
       }
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = activeHash || createHash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "CREATE_RULE",
         status: "CONFIRMED",
         familyId: family.id,
@@ -175,10 +191,11 @@ export default function RuleBuilderPage() {
         familyId: family.id,
         actor: creator,
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Formulated programmable Rule Version ${newVersion} (${strategy})`,
+        txHash,
+        details: `Formulated programmable Rule Version ${newVersion} (${strategy}) on Stellar Testnet`,
       });
 
+      await syncOnChainState(family.id);
       router.push("/rules");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to deploy rule on-chain");

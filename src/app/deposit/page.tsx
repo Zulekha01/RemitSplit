@@ -26,11 +26,13 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ExplorerLink } from "@/components/shared/explorer-link";
 import { xlmToStroops, stroopsToXlm, bpsToPercentage } from "@/lib/formatters";
 
+import { distributionContractService } from "@/services/distribution-contract";
+
 type FlowStep = "INPUT" | "PREVIEW" | "SIGNING" | "PROCESSING" | "CONFIRMED" | "FAILED";
 
 export default function DepositPage() {
   const { families, selectedFamilyId, selectFamily, getSelectedFamily } = useFamilyStore();
-  const { address, isConnected, balance, connect } = useWalletStore();
+  const { address, isConnected, balance, connect, getSignerOptions, refreshBalance } = useWalletStore();
   const { addTransaction, updateStatus } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
@@ -59,7 +61,7 @@ export default function DepositPage() {
     return {
       recipient: alloc.recipient,
       label: alloc.label,
-      amountStroops,
+      amountStroops: payoutStroops,
     };
   });
 
@@ -84,22 +86,31 @@ export default function DepositPage() {
 
     try {
       setIsSimulating(true);
-      await new Promise((res) => setTimeout(res, 800));
+      const sender = address || family.owner;
+      const signerOpts = getSignerOptions();
       setIsSimulating(false);
 
       setStep("PROCESSING");
 
-      const hash = "6e" + Array.from({ length: 62 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const res = await distributionContractService.executeDepositAndDistribute(
+        sender,
+        family.id,
+        amountStroops,
+        process.env.NEXT_PUBLIC_NATIVE_ASSET_CONTRACT_ID || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        signerOpts
+      );
+
+      const hash = res.hash;
       setTxHash(hash);
 
       addTransaction({
         hash,
         type: "DISTRIBUTE",
-        status: "PROCESSING",
+        status: "CONFIRMED",
         familyId: family.id,
         familyName: family.name,
         amount: amountStroops,
-        depositor: address || family.owner,
+        depositor: sender,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -108,28 +119,25 @@ export default function DepositPage() {
         id: `evt-${Date.now()}-dep`,
         type: "DEPOSIT_FUNDED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: sender,
         amount: amountStroops,
         timestamp: Date.now(),
         txHash: hash,
-        details: `Deposited ${amountStr} XLM into RemitSplit Escrow Vault`,
+        details: `Deposited ${amountStr} XLM into RemitSplit Escrow Vault on Stellar Testnet`,
       });
-
-      await new Promise((res) => setTimeout(res, 2200));
-
-      updateStatus(hash, "CONFIRMED");
 
       addEvent({
         id: `evt-${Date.now()}-comp`,
         type: "DISTRIBUTION_COMPLETED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: sender,
         amount: amountStroops,
         timestamp: Date.now(),
         txHash: hash,
         details: `Settled ${amountStr} XLM across ${activeRule.allocations.length} family recipients.`,
       });
 
+      await refreshBalance();
       setStep("CONFIRMED");
     } catch (err: any) {
       setErrorMsg(err.message || "Remittance transaction failed on Stellar network.");

@@ -26,8 +26,9 @@ import { formatTimestamp } from "@/lib/formatters";
 import { Role } from "@/types";
 
 export default function FamiliesPage() {
-  const { families, selectedFamilyId, getSelectedFamily, createFamily, addMember, removeMember } = useFamilyStore();
-  const { address } = useWalletStore();
+  const { families, selectedFamilyId, selectFamily, getSelectedFamily, createFamily, addMember, removeMember, syncOnChainState, isLoadingOnChain } =
+    useFamilyStore();
+  const { address, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
@@ -45,6 +46,10 @@ export default function FamiliesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  React.useEffect(() => {
+    syncOnChainState(selectedFamilyId);
+  }, [selectedFamilyId, syncOnChainState]);
+
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
@@ -52,12 +57,13 @@ export default function FamiliesPage() {
     setIsSubmitting(true);
     setErrorMsg("");
     try {
-      const ownerAddress = address || "GDG64ZSK6S6322AXXV53M3QZ6WCEY3I3J644W7RMYAOWB74L4R3Z3E6S";
-      const newId = await createFamily(newFamilyName.trim(), ownerAddress);
+      const ownerAddress = address || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+      const signerOpts = getSignerOptions();
+      const { id: newId, hash } = await createFamily(newFamilyName.trim(), ownerAddress, signerOpts);
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "CREATE_FAMILY",
         status: "CONFIRMED",
         familyId: newId,
@@ -73,12 +79,13 @@ export default function FamiliesPage() {
         familyId: newId,
         actor: ownerAddress,
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Registered new family group: "${newFamilyName.trim()}"`,
+        txHash,
+        details: `Registered new family group: "${newFamilyName.trim()}" on Stellar Testnet`,
       });
 
       setNewFamilyName("");
       setCreateFamilyOpen(false);
+      await syncOnChainState(newId);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to create family record");
     } finally {
@@ -98,16 +105,18 @@ export default function FamiliesPage() {
     setIsSubmitting(true);
     setErrorMsg("");
     try {
-      await addMember(family.id, newMemberAddress.trim(), newMemberRole, newMemberName.trim());
+      const caller = address || family.owner;
+      const signerOpts = getSignerOptions();
+      const hash = await addMember(family.id, newMemberAddress.trim(), newMemberRole, newMemberName.trim(), caller, signerOpts);
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "ADD_MEMBER",
         status: "CONFIRMED",
         familyId: family.id,
         familyName: family.name,
-        depositor: address || family.owner,
+        depositor: caller,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -116,17 +125,18 @@ export default function FamiliesPage() {
         id: `evt-${Date.now()}`,
         type: "MEMBER_ADDED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: caller,
         recipient: newMemberAddress.trim(),
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Added ${newMemberName.trim()} (${newMemberRole}) to family registry`,
+        txHash,
+        details: `Added ${newMemberName.trim()} (${newMemberRole}) to family registry on-chain`,
       });
 
       setNewMemberName("");
       setNewMemberAddress("");
       setNewMemberRole("Recipient");
       setAddMemberOpen(false);
+      await syncOnChainState(family.id);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to add member to ledger");
     } finally {
@@ -142,16 +152,18 @@ export default function FamiliesPage() {
     }
 
     if (confirm("Are you sure you want to remove this family member from on-chain registry?")) {
-      await removeMember(family.id, memberAddress);
+      const caller = address || family.owner;
+      const signerOpts = getSignerOptions();
+      const hash = await removeMember(family.id, memberAddress, caller, signerOpts);
 
-      const fakeHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
       addTransaction({
-        hash: fakeHash,
+        hash: txHash,
         type: "REMOVE_MEMBER",
         status: "CONFIRMED",
         familyId: family.id,
         familyName: family.name,
-        depositor: address || family.owner,
+        depositor: caller,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -160,11 +172,13 @@ export default function FamiliesPage() {
         id: `evt-${Date.now()}`,
         type: "MEMBER_REMOVED",
         familyId: family.id,
-        actor: address || family.owner,
+        actor: caller,
+        recipient: memberAddress,
         timestamp: Date.now(),
-        txHash: fakeHash,
-        details: `Removed member ${memberAddress.slice(0, 4)}...${memberAddress.slice(-4)} from family registry`,
+        txHash,
+        details: `Removed member ${memberAddress} from family group on-chain`,
       });
+      await syncOnChainState(family.id);
     }
   };
 
