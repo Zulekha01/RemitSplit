@@ -3,44 +3,33 @@
 import { create } from "zustand";
 import { Family, Member, AllocationRule, Role, AllocationStrategy, AllocationItem } from "@/types";
 import { logger } from "@/lib/logger";
+import { registryContractService, TxSignerOptions } from "@/services/registry-contract";
 
 const INITIAL_FAMILIES: Family[] = [
   {
     id: 1,
     name: "Aalmi Global Family",
-    owner: "GDG64ZSK6S6322AXXV53M3QZ6WCEY3I3J644W7RMYAOWB74L4R3Z3E6S",
+    owner: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
     activeRuleVersion: 1,
-    createdAt: Date.now() - 86400000 * 5,
+    createdAt: 1788200057000,
     members: [
       {
-        address: "GDG64ZSK6S6322AXXV53M3QZ6WCEY3I3J644W7RMYAOWB74L4R3Z3E6S",
+        address: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
         role: "Sender",
         name: "Zulekha (Sender/Owner)",
-        joinedAt: Date.now() - 86400000 * 5,
+        joinedAt: 1788200057000,
       },
       {
-        address: "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFXYAOWB74L4R3Z3E6S7",
+        address: "GDIDVDGQ7VYKML4FYUUYREX6EXWCRJ2BF7XOMDL4JS3SVODPF7TFF4L7",
         role: "CoAdmin",
         name: "Priya (Sister/Co-Admin)",
-        joinedAt: Date.now() - 86400000 * 4,
+        joinedAt: 1788200067000,
       },
       {
-        address: "GCKXE2C7KEW3OGCMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3ZMF",
+        address: "GDEEOM6PWOO6RIRSMEOOKGQUEKTYBWR37DBOU6RAPDU5YPR7VNGM6EJX",
         role: "Recipient",
-        name: "Parents (Home Country)",
-        joinedAt: Date.now() - 86400000 * 4,
-      },
-      {
-        address: "GAYOLLLVPWNOY2R4CMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3Z",
-        role: "Recipient",
-        name: "Rahul (University Sibling)",
-        joinedAt: Date.now() - 86400000 * 3,
-      },
-      {
-        address: "GB3K5ZJ6E7F4CMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3ZMFA",
-        role: "Recipient",
-        name: "Amina (Dependent)",
-        joinedAt: Date.now() - 86400000 * 3,
+        name: "Mother (Recipient)",
+        joinedAt: 1788200082000,
       },
     ],
     activeRule: {
@@ -49,23 +38,18 @@ const INITIAL_FAMILIES: Family[] = [
       version: 1,
       strategy: "Percentage",
       active: true,
-      createdBy: "GDG64ZSK6S6322AXXV53M3QZ6WCEY3I3J644W7RMYAOWB74L4R3Z3E6S",
-      createdAt: Date.now() - 86400000 * 4,
+      createdBy: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
+      createdAt: 1788200097000,
       allocations: [
         {
-          recipient: "GCKXE2C7KEW3OGCMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3ZMF",
+          recipient: "GDEEOM6PWOO6RIRSMEOOKGQUEKTYBWR37DBOU6RAPDU5YPR7VNGM6EJX",
           shareOrAmount: 5000n, // 50.00%
-          label: "Parents Living Expenses (50%)",
+          label: "Mother Living Allowance (50%)",
         },
         {
-          recipient: "GAYOLLLVPWNOY2R4CMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3Z",
-          shareOrAmount: 3000n, // 30.00%
-          label: "Sibling Tuition (30%)",
-        },
-        {
-          recipient: "GB3K5ZJ6E7F4CMFU2P4F4DMBRCI3FNQ4BXLFMNDLFJUNPU2HY3ZMFA",
-          shareOrAmount: 2000n, // 20.00%
-          label: "Family Medical Emergency Fund (20%)",
+          recipient: "GDIDVDGQ7VYKML4FYUUYREX6EXWCRJ2BF7XOMDL4JS3SVODPF7TFF4L7",
+          shareOrAmount: 5000n, // 50.00%
+          label: "Sister Tuition & Education (50%)",
         },
       ],
     },
@@ -75,29 +59,31 @@ const INITIAL_FAMILIES: Family[] = [
 interface FamilyStore {
   families: Family[];
   selectedFamilyId: number;
-  rules: Record<number, AllocationRule[]>; // familyId -> rules
+  rules: Record<number, AllocationRule[]>;
+  isLoadingOnChain: boolean;
   selectFamily: (id: number) => void;
-  createFamily: (name: string, owner: string) => Promise<number>;
-  addMember: (familyId: number, memberAddress: string, role: Role, name: string) => Promise<void>;
-  removeMember: (familyId: number, memberAddress: string) => Promise<void>;
+  syncOnChainState: (familyId?: number) => Promise<void>;
+  createFamily: (name: string, owner: string, options?: TxSignerOptions) => Promise<{ id: number; hash?: string }>;
+  addMember: (familyId: number, memberAddress: string, role: Role, name: string, caller?: string, options?: TxSignerOptions) => Promise<string | undefined>;
+  removeMember: (familyId: number, memberAddress: string, caller?: string, options?: TxSignerOptions) => Promise<string | undefined>;
   createRule: (
     familyId: number,
     strategy: AllocationStrategy,
     allocations: AllocationItem[],
-    createdBy: string
-  ) => Promise<number>;
-  activateRule: (familyId: number, version: number) => Promise<void>;
-  deactivateRule: (familyId: number) => Promise<void>;
+    createdBy: string,
+    options?: TxSignerOptions
+  ) => Promise<{ version: number; hash?: string }>;
+  activateRule: (familyId: number, version: number, caller?: string, options?: TxSignerOptions) => Promise<string | undefined>;
+  deactivateRule: (familyId: number, caller?: string, options?: TxSignerOptions) => Promise<string | undefined>;
   getSelectedFamily: () => Family | undefined;
 }
 
 export const useFamilyStore = create<FamilyStore>((set, get) => ({
   families: INITIAL_FAMILIES,
   selectedFamilyId: 1,
+  isLoadingOnChain: false,
   rules: {
-    1: [
-      INITIAL_FAMILIES[0].activeRule!,
-    ],
+    1: [INITIAL_FAMILIES[0].activeRule!],
   },
 
   selectFamily: (id: number) => {
@@ -109,7 +95,50 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     return families.find((f) => f.id === selectedFamilyId) || families[0];
   },
 
-  createFamily: async (name: string, owner: string) => {
+  syncOnChainState: async (familyId: number = 1) => {
+    set({ isLoadingOnChain: true });
+    try {
+      const onChainFamily = await registryContractService.fetchFamily(familyId);
+      if (!onChainFamily) return;
+
+      const [members, activeRule] = await Promise.all([
+        registryContractService.fetchMembers(familyId),
+        registryContractService.fetchActiveRule(familyId),
+      ]);
+
+      const fullFamily: Family = {
+        ...onChainFamily,
+        members: members.length > 0 ? members : onChainFamily.members,
+        activeRule: activeRule || undefined,
+      };
+
+      set((state) => ({
+        families: state.families.some((f) => f.id === familyId)
+          ? state.families.map((f) => (f.id === familyId ? fullFamily : f))
+          : [...state.families, fullFamily],
+        rules: {
+          ...state.rules,
+          [familyId]: activeRule ? [activeRule] : state.rules[familyId] || [],
+        },
+      }));
+      logger.info("FamilyStore", `Synced on-chain state for family ${familyId}`);
+    } catch (err) {
+      logger.debug("FamilyStore", "Failed to sync on-chain state, keeping cached", err);
+    } finally {
+      set({ isLoadingOnChain: false });
+    }
+  },
+
+  createFamily: async (name: string, owner: string, options?: TxSignerOptions) => {
+    let txHash: string | undefined;
+
+    try {
+      const res = await registryContractService.executeCreateFamily(owner, name, options);
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain create_family note; applying optimistic update", err);
+    }
+
     const newId = get().families.length + 1;
     const newFamily: Family = {
       id: newId,
@@ -134,10 +163,35 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     }));
 
     logger.info("FamilyStore", `Created family ${name} with id ${newId}`);
-    return newId;
+    return { id: newId, hash: txHash };
   },
 
-  addMember: async (familyId: number, memberAddress: string, role: Role, name: string) => {
+  addMember: async (
+    familyId: number,
+    memberAddress: string,
+    role: Role,
+    name: string,
+    caller?: string,
+    options?: TxSignerOptions
+  ) => {
+    const family = get().families.find((f) => f.id === familyId);
+    const callerAddress = caller || family?.owner || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+    let txHash: string | undefined;
+
+    try {
+      const res = await registryContractService.executeAddMember(
+        callerAddress,
+        familyId,
+        memberAddress,
+        role,
+        name,
+        options
+      );
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain add_member note; applying state update", err);
+    }
+
     set((state) => ({
       families: state.families.map((f) => {
         if (f.id !== familyId) return f;
@@ -159,9 +213,31 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     }));
 
     logger.info("FamilyStore", `Added member ${name} (${role}) to family ${familyId}`);
+    return txHash;
   },
 
-  removeMember: async (familyId: number, memberAddress: string) => {
+  removeMember: async (
+    familyId: number,
+    memberAddress: string,
+    caller?: string,
+    options?: TxSignerOptions
+  ) => {
+    const family = get().families.find((f) => f.id === familyId);
+    const callerAddress = caller || family?.owner || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+    let txHash: string | undefined;
+
+    try {
+      const res = await registryContractService.executeRemoveMember(
+        callerAddress,
+        familyId,
+        memberAddress,
+        options
+      );
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain remove_member note; applying state update", err);
+    }
+
     set((state) => ({
       families: state.families.map((f) => {
         if (f.id !== familyId) return f;
@@ -172,14 +248,31 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       }),
     }));
     logger.info("FamilyStore", `Removed member ${memberAddress} from family ${familyId}`);
+    return txHash;
   },
 
   createRule: async (
     familyId: number,
     strategy: AllocationStrategy,
     allocations: AllocationItem[],
-    createdBy: string
+    createdBy: string,
+    options?: TxSignerOptions
   ) => {
+    let txHash: string | undefined;
+
+    try {
+      const res = await registryContractService.executeCreateRule(
+        createdBy,
+        familyId,
+        strategy,
+        allocations,
+        options
+      );
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain create_rule note; applying state update", err);
+    }
+
     const existingRules = get().rules[familyId] || [];
     const nextVersion = existingRules.length + 1;
 
@@ -202,37 +295,81 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     }));
 
     logger.info("FamilyStore", `Created rule version ${nextVersion} for family ${familyId}`);
-    return nextVersion;
+    return { version: nextVersion, hash: txHash };
   },
 
-  activateRule: async (familyId: number, version: number) => {
-    const existingRules = get().rules[familyId] || [];
-    const targetRule = existingRules.find((r) => r.version === version);
+  activateRule: async (
+    familyId: number,
+    version: number,
+    caller?: string,
+    options?: TxSignerOptions
+  ) => {
+    const family = get().families.find((f) => f.id === familyId);
+    const callerAddress = caller || family?.owner || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+    let txHash: string | undefined;
 
-    if (!targetRule) return;
+    try {
+      const res = await registryContractService.executeActivateRule(
+        callerAddress,
+        familyId,
+        version,
+        options
+      );
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain activate_rule note; applying state update", err);
+    }
 
-    set((state) => ({
-      rules: {
-        ...state.rules,
-        [familyId]: (state.rules[familyId] || []).map((r) => ({
-          ...r,
-          active: r.version === version,
-        })),
-      },
-      families: state.families.map((f) => {
-        if (f.id !== familyId) return f;
-        return {
-          ...f,
-          activeRuleVersion: version,
-          activeRule: { ...targetRule, active: true },
-        };
-      }),
-    }));
+    set((state) => {
+      const familyRules = state.rules[familyId] || [];
+      const updatedRules = familyRules.map((r) => ({
+        ...r,
+        active: r.version === version,
+      }));
+
+      const activeRule = updatedRules.find((r) => r.version === version);
+
+      return {
+        rules: {
+          ...state.rules,
+          [familyId]: updatedRules,
+        },
+        families: state.families.map((f) =>
+          f.id === familyId
+            ? {
+                ...f,
+                activeRuleVersion: version,
+                activeRule: activeRule || f.activeRule,
+              }
+            : f
+        ),
+      };
+    });
 
     logger.info("FamilyStore", `Activated rule version ${version} for family ${familyId}`);
+    return txHash;
   },
 
-  deactivateRule: async (familyId: number) => {
+  deactivateRule: async (
+    familyId: number,
+    caller?: string,
+    options?: TxSignerOptions
+  ) => {
+    const family = get().families.find((f) => f.id === familyId);
+    const callerAddress = caller || family?.owner || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+    let txHash: string | undefined;
+
+    try {
+      const res = await registryContractService.executeDeactivateRule(
+        callerAddress,
+        familyId,
+        options
+      );
+      txHash = res.hash;
+    } catch (err) {
+      logger.warn("FamilyStore", "On-chain deactivate_rule note; applying state update", err);
+    }
+
     set((state) => ({
       rules: {
         ...state.rules,
@@ -241,16 +378,18 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
           active: false,
         })),
       },
-      families: state.families.map((f) => {
-        if (f.id !== familyId) return f;
-        return {
-          ...f,
-          activeRuleVersion: 0,
-          activeRule: undefined,
-        };
-      }),
+      families: state.families.map((f) =>
+        f.id === familyId
+          ? {
+              ...f,
+              activeRuleVersion: 0,
+              activeRule: undefined,
+            }
+          : f
+      ),
     }));
 
-    logger.info("FamilyStore", `Deactivated active rule for family ${familyId}`);
+    logger.info("FamilyStore", `Deactivated rule for family ${familyId}`);
+    return txHash;
   },
 }));
