@@ -8,7 +8,7 @@ import { Role, AllocationStrategy, AllocationItem, Family, Member, AllocationRul
 import { stellarRpcService, SubmitTxResult } from "./stellar-rpc";
 
 const REGISTRY_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD";
+  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D";
 
 export interface TxSignerOptions {
   signTransaction?: (xdrBase64: string) => Promise<string>;
@@ -27,7 +27,7 @@ export class RegistryContractService {
   }
 
   getContractId(): string {
-    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD";
+    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D";
   }
 
   /**
