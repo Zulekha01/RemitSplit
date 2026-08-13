@@ -47,4 +47,17 @@ describe("On-Chain Stores Initial State & Zero-Mock Guarantee", () => {
 
     expect(useFamilyStore.getState().getSelectedFamily()).toBeUndefined();
   });
+
+  it("supports in-app keypair generation and ed25519 signing", async () => {
+    useFamilyStore.setState({ syncOnChainState: async () => {} });
+    const pubKey = await useWalletStore.getState().connectWithKeypair(undefined, false);
+    expect(pubKey).toMatch(/^G[A-Z0-9]{55}$/);
+    expect(useWalletStore.getState().isConnected).toBe(true);
+    expect(useWalletStore.getState().activeSecretKey).toMatch(/^S[A-Z0-9]{55}$/);
+
+    useWalletStore.getState().disconnect();
+    expect(useWalletStore.getState().address).toBeNull();
+    expect(useWalletStore.getState().activeSecretKey).toBeNull();
+    expect(useWalletStore.getState().isConnected).toBe(false);
+  });
 });
