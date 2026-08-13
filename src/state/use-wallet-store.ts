@@ -1,11 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import {
-  StellarWalletsKit,
-  WalletNetwork,
-  allowAllModules,
-} from "@creit.tech/stellar-wallets-kit";
 import { Horizon, Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 import { logger } from "@/lib/logger";
 
@@ -25,7 +20,7 @@ interface WalletStore {
   walletName: string | null;
   isConnecting: boolean;
   error: string | null;
-  kit: StellarWalletsKit | null;
+  kit: any | null;
   connect: (customAddress?: string) => Promise<void>;
   disconnect: () => void;
   refreshBalance: () => Promise<void>;
@@ -37,11 +32,11 @@ interface WalletStore {
 }
 
 export const useWalletStore = create<WalletStore>((set, get) => ({
-  address: DEV_ACCOUNT_ADDRESS,
-  isConnected: true,
+  address: null,
+  isConnected: false,
   network: process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet",
   balance: "0",
-  walletName: "Dev Account (remitsplit_deployer)",
+  walletName: null,
   isConnecting: false,
   error: null,
   kit: null,
@@ -54,7 +49,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         set({
           address: customAddress,
           isConnected: true,
-          walletName: "Dev Account",
+          walletName: "Custom Account",
           isConnecting: false,
         });
         await get().refreshBalance();
@@ -63,6 +58,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
       let kitInstance = get().kit;
       if (!kitInstance && typeof window !== "undefined") {
+        const { StellarWalletsKit, WalletNetwork, allowAllModules } = await import(
+          "@creit.tech/stellar-wallets-kit"
+        );
         kitInstance = new StellarWalletsKit({
           network: WalletNetwork.TESTNET,
           selectedWalletId: "freighter",
@@ -76,7 +74,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       }
 
       await kitInstance.openModal({
-        onWalletSelected: async (option) => {
+        onWalletSelected: async (option: any) => {
           try {
             kitInstance?.setWallet(option.id);
             const { address } = await kitInstance!.getAddress();
@@ -99,14 +97,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       });
     } catch (err: any) {
       logger.error("Wallet", "Connection error", err);
-      // Fallback to active deployed testnet identity
-      set({
-        address: DEV_ACCOUNT_ADDRESS,
-        isConnected: true,
-        walletName: "Testnet Deployer (remitsplit_deployer)",
-        isConnecting: false,
-      });
-      await get().refreshBalance();
+      set({ error: err.message || "Failed to connect wallet", isConnecting: false });
     }
   },
 

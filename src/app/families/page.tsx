@@ -54,34 +54,40 @@ export default function FamiliesPage() {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
 
+    if (!address) {
+      setErrorMsg("Please connect your Stellar wallet first.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg("");
     try {
-      const ownerAddress = address || "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
+      const ownerAddress = address;
       const signerOpts = getSignerOptions();
       const { id: newId, hash } = await createFamily(newFamilyName.trim(), ownerAddress, signerOpts);
 
-      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "CREATE_FAMILY",
-        status: "CONFIRMED",
-        familyId: newId,
-        familyName: newFamilyName.trim(),
-        depositor: ownerAddress,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      if (hash) {
+        addTransaction({
+          hash,
+          type: "CREATE_FAMILY",
+          status: "CONFIRMED",
+          familyId: newId,
+          familyName: newFamilyName.trim(),
+          depositor: ownerAddress,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "FAMILY_CREATED",
-        familyId: newId,
-        actor: ownerAddress,
-        timestamp: Date.now(),
-        txHash,
-        details: `Registered new family group: "${newFamilyName.trim()}" on Stellar Testnet`,
-      });
+        addEvent({
+          id: `evt-${Date.now()}`,
+          type: "FAMILY_CREATED",
+          familyId: newId,
+          actor: ownerAddress,
+          timestamp: Date.now(),
+          txHash: hash,
+          details: `Registered new family group: "${newFamilyName.trim()}" on Stellar Testnet`,
+        });
+      }
 
       setNewFamilyName("");
       setCreateFamilyOpen(false);
@@ -97,6 +103,11 @@ export default function FamiliesPage() {
     e.preventDefault();
     if (!newMemberName.trim() || !newMemberAddress.trim() || !family) return;
 
+    if (!address) {
+      setErrorMsg("Please connect your Stellar wallet first.");
+      return;
+    }
+
     if (!newMemberAddress.startsWith("G") || newMemberAddress.length !== 56) {
       setErrorMsg("Invalid Stellar public key address (must start with G and be 56 characters).");
       return;
@@ -105,32 +116,33 @@ export default function FamiliesPage() {
     setIsSubmitting(true);
     setErrorMsg("");
     try {
-      const caller = address || family.owner;
+      const caller = address;
       const signerOpts = getSignerOptions();
       const hash = await addMember(family.id, newMemberAddress.trim(), newMemberRole, newMemberName.trim(), caller, signerOpts);
 
-      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "ADD_MEMBER",
-        status: "CONFIRMED",
-        familyId: family.id,
-        familyName: family.name,
-        depositor: caller,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      if (hash) {
+        addTransaction({
+          hash,
+          type: "ADD_MEMBER",
+          status: "CONFIRMED",
+          familyId: family.id,
+          familyName: family.name,
+          depositor: caller,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "MEMBER_ADDED",
-        familyId: family.id,
-        actor: caller,
-        recipient: newMemberAddress.trim(),
-        timestamp: Date.now(),
-        txHash,
-        details: `Added ${newMemberName.trim()} (${newMemberRole}) to family registry on-chain`,
-      });
+        addEvent({
+          id: `evt-${Date.now()}`,
+          type: "MEMBER_ADDED",
+          familyId: family.id,
+          actor: caller,
+          recipient: newMemberAddress.trim(),
+          timestamp: Date.now(),
+          txHash: hash,
+          details: `Added ${newMemberName.trim()} (${newMemberRole}) to family registry on-chain`,
+        });
+      }
 
       setNewMemberName("");
       setNewMemberAddress("");
@@ -151,33 +163,39 @@ export default function FamiliesPage() {
       return;
     }
 
+    if (!address) {
+      alert("Please connect your Stellar wallet first.");
+      return;
+    }
+
     if (confirm("Are you sure you want to remove this family member from on-chain registry?")) {
-      const caller = address || family.owner;
+      const caller = address;
       const signerOpts = getSignerOptions();
       const hash = await removeMember(family.id, memberAddress, caller, signerOpts);
 
-      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "REMOVE_MEMBER",
-        status: "CONFIRMED",
-        familyId: family.id,
-        familyName: family.name,
-        depositor: caller,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      if (hash) {
+        addTransaction({
+          hash,
+          type: "REMOVE_MEMBER",
+          status: "CONFIRMED",
+          familyId: family.id,
+          familyName: family.name,
+          depositor: caller,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "MEMBER_REMOVED",
-        familyId: family.id,
-        actor: caller,
-        recipient: memberAddress,
-        timestamp: Date.now(),
-        txHash,
-        details: `Removed member ${memberAddress} from family group on-chain`,
-      });
+        addEvent({
+          id: `evt-${Date.now()}`,
+          type: "MEMBER_REMOVED",
+          familyId: family.id,
+          actor: caller,
+          recipient: memberAddress,
+          timestamp: Date.now(),
+          txHash: hash,
+          details: `Removed member ${memberAddress} from family group on-chain`,
+        });
+      }
       await syncOnChainState(family.id);
     }
   };

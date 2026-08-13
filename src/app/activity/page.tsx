@@ -18,8 +18,12 @@ import { ExplorerLink } from "@/components/shared/explorer-link";
 import { formatTimestamp } from "@/lib/formatters";
 
 export default function ActivityPage() {
-  const { events, filterType, setFilterType, getFilteredEvents } = useActivityStore();
+  const { events, filterType, setFilterType, getFilteredEvents, syncOnChainEvents } = useActivityStore();
   const filteredEvents = getFilteredEvents();
+
+  React.useEffect(() => {
+    syncOnChainEvents();
+  }, [syncOnChainEvents]);
 
   const eventFilters = [
     { label: "All Wire Feeds", value: "ALL" },

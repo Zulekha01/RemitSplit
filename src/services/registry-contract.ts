@@ -292,6 +292,53 @@ export class RegistryContractService {
       })),
     };
   }
+
+  async fetchRule(familyId: number, version: number): Promise<AllocationRule | null> {
+    const raw = await stellarRpcService.callReadMethod(
+      this.getContractId(),
+      "get_rule",
+      nativeToScVal(familyId, { type: "u32" }),
+      nativeToScVal(version, { type: "u32" })
+    );
+    if (!raw) return null;
+
+    const strategyMap: Record<number, AllocationStrategy> = {
+      0: "Percentage",
+      1: "FixedAmount",
+      2: "Waterfall",
+    };
+
+    return {
+      id: Number(raw.id),
+      familyId: Number(raw.family_id),
+      version: Number(raw.version),
+      strategy: strategyMap[Number(raw.strategy)] || "Percentage",
+      active: Boolean(raw.active),
+      createdBy: String(raw.created_by),
+      createdAt: Number(raw.created_at) * 1000,
+      allocations: (raw.allocations || []).map((a: any) => ({
+        recipient: String(a.recipient),
+        shareOrAmount: BigInt(a.share_or_amount),
+        label: String(a.label),
+      })),
+    };
+  }
+
+  async fetchAllRules(familyId: number): Promise<AllocationRule[]> {
+    const rules: AllocationRule[] = [];
+    let version = 1;
+    while (true) {
+      try {
+        const rule = await this.fetchRule(familyId, version);
+        if (!rule) break;
+        rules.push(rule);
+        version++;
+      } catch {
+        break;
+      }
+    }
+    return rules;
+  }
 }
 
 export const registryContractService = new RegistryContractService();

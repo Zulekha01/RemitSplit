@@ -43,18 +43,23 @@ export default function RuleBuilderPage() {
   const recipientMembers = members.filter((m) => m.role === "Recipient");
 
   const [strategy, setStrategy] = useState<AllocationStrategy>("Percentage");
-  const [items, setItems] = useState<BuilderItem[]>([
-    {
-      recipient: recipientMembers[0]?.address || members[0]?.address || "",
-      amountStr: "50",
-      label: "Parents Support",
-    },
-    {
-      recipient: recipientMembers[1]?.address || members[1]?.address || "",
-      amountStr: "50",
-      label: "Sibling Education",
-    },
-  ]);
+  const [items, setItems] = useState<BuilderItem[]>([]);
+
+  // Initialize items from on-chain recipient members once loaded
+  React.useEffect(() => {
+    if (items.length === 0 && recipientMembers.length > 0) {
+      if (recipientMembers.length >= 2) {
+        setItems([
+          { recipient: recipientMembers[0].address, amountStr: "50", label: recipientMembers[0].name },
+          { recipient: recipientMembers[1].address, amountStr: "50", label: recipientMembers[1].name },
+        ]);
+      } else {
+        setItems([
+          { recipient: recipientMembers[0].address, amountStr: "100", label: recipientMembers[0].name },
+        ]);
+      }
+    }
+  }, [recipientMembers, items.length]);
 
   const [autoActivate, setAutoActivate] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,11 +133,16 @@ export default function RuleBuilderPage() {
     e.preventDefault();
     if (!isValid || !family) return;
 
+    if (!address) {
+      setErrorMsg("Please connect your Stellar wallet first.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg("");
 
     try {
-      const creator = address || family.owner;
+      const creator = address;
       const signerOpts = getSignerOptions();
 
       const formattedAllocations: AllocationItem[] = items.map((it) => {
@@ -173,27 +183,29 @@ export default function RuleBuilderPage() {
         activeHash = await activateRule(family.id, newVersion, creator, signerOpts);
       }
 
-      const txHash = activeHash || createHash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "CREATE_RULE",
-        status: "CONFIRMED",
-        familyId: family.id,
-        familyName: family.name,
-        depositor: creator,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      const txHash = activeHash || createHash;
+      if (txHash) {
+        addTransaction({
+          hash: txHash,
+          type: "CREATE_RULE",
+          status: "CONFIRMED",
+          familyId: family.id,
+          familyName: family.name,
+          depositor: creator,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "RULE_CREATED",
-        familyId: family.id,
-        actor: creator,
-        timestamp: Date.now(),
-        txHash,
-        details: `Formulated programmable Rule Version ${newVersion} (${strategy}) on Stellar Testnet`,
-      });
+        addEvent({
+          id: `evt-${Date.now()}`,
+          type: "RULE_CREATED",
+          familyId: family.id,
+          actor: creator,
+          timestamp: Date.now(),
+          txHash,
+          details: `Formulated programmable Rule Version ${newVersion} (${strategy}) on Stellar Testnet`,
+        });
+      }
 
       await syncOnChainState(family.id);
       router.push("/rules");

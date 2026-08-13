@@ -17,8 +17,13 @@ import { useTransactionStore } from "@/state/use-transaction-store";
 import { AmountDisplay } from "@/components/shared/amount-display";
 
 export default function AnalyticsPage() {
-  const { families, selectedFamilyId, getSelectedFamily } = useFamilyStore();
-  const { transactions } = useTransactionStore();
+  const { families, selectedFamilyId, getSelectedFamily, syncOnChainState } = useFamilyStore();
+  const { transactions, syncOnChainTransactions } = useTransactionStore();
+
+  React.useEffect(() => {
+    syncOnChainState();
+    syncOnChainTransactions();
+  }, [syncOnChainState, syncOnChainTransactions]);
 
   const family = getSelectedFamily();
   const activeRule = family?.activeRule;
@@ -117,24 +122,30 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              {activeRule?.allocations.map((alloc, idx) => {
-                const percentage = activeRule.strategy === "Percentage"
-                  ? Number(alloc.shareOrAmount) / 100
-                  : 33.33;
+              {!activeRule || activeRule.allocations.length === 0 ? (
+                <div className="p-6 text-center text-xs font-mono text-[#737373]">
+                  No active on-chain rule allocations configured yet.
+                </div>
+              ) : (
+                activeRule.allocations.map((alloc, idx) => {
+                  const percentage = activeRule.strategy === "Percentage"
+                    ? Number(alloc.shareOrAmount) / 100
+                    : 33.33;
 
-                return (
-                  <div key={idx} className="border border-[#111111] p-3.5 bg-[#F5F5F5] space-y-2">
-                    <div className="flex items-center justify-between font-bold">
-                      <span className="font-serif text-sm text-[#111111]">{alloc.label}</span>
-                      <span>{percentage.toFixed(1)}%</span>
+                  return (
+                    <div key={idx} className="border border-[#111111] p-3.5 bg-[#F5F5F5] space-y-2">
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="font-serif text-sm text-[#111111]">{alloc.label}</span>
+                        <span>{percentage.toFixed(1)}%</span>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                      <div className="text-[10px] text-[#737373]">
+                        Recipient: {alloc.recipient.slice(0, 6)}...{alloc.recipient.slice(-6)}
+                      </div>
                     </div>
-                    <Progress value={percentage} className="h-2" />
-                    <div className="text-[10px] text-[#737373]">
-                      Recipient: {alloc.recipient.slice(0, 6)}...{alloc.recipient.slice(-6)}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 

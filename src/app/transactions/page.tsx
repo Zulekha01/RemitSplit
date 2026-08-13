@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { useTransactionStore } from "@/state/use-transaction-store";
 import { useActivityStore } from "@/state/use-activity-store";
+import { useWalletStore } from "@/state/use-wallet-store";
+import { distributionContractService } from "@/services/distribution-contract";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AmountDisplay } from "@/components/shared/amount-display";
 import { ExplorerLink } from "@/components/shared/explorer-link";
@@ -25,11 +27,16 @@ import { formatTimestamp } from "@/lib/formatters";
 import { TransactionStatus } from "@/types";
 
 export default function TransactionsPage() {
-  const { transactions, filterStatus, setFilterStatus, getFilteredTransactions, updateStatus } = useTransactionStore();
+  const { transactions, filterStatus, setFilterStatus, getFilteredTransactions, updateStatus, syncOnChainTransactions } = useTransactionStore();
   const { addEvent } = useActivityStore();
+  const { address, getSignerOptions } = useWalletStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [retryingHash, setRetryingHash] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    syncOnChainTransactions();
+  }, [syncOnChainTransactions]);
 
   const filtered = getFilteredTransactions().filter((tx) => {
     if (!searchQuery.trim()) return true;
@@ -42,23 +49,45 @@ export default function TransactionsPage() {
   });
 
   const handleRetry = async (hash: string) => {
+    if (!address) {
+      alert("Please connect your Stellar wallet first.");
+      return;
+    }
+
+    const tx = transactions.find((t) => t.hash === hash);
+    if (!tx || !tx.distributionId) {
+      alert("No on-chain distribution ID found for this transaction.");
+      return;
+    }
+
     setRetryingHash(hash);
     updateStatus(hash, "PROCESSING");
 
-    await new Promise((res) => setTimeout(res, 2000));
+    try {
+      const signerOpts = getSignerOptions();
+      const res = await distributionContractService.executeRetryDistribution(
+        address,
+        tx.distributionId,
+        signerOpts
+      );
 
-    updateStatus(hash, "CONFIRMED");
-    addEvent({
-      id: `evt-${Date.now()}-retry`,
-      type: "DISTRIBUTION_COMPLETED",
-      familyId: 1,
-      actor: "Sender",
-      timestamp: Date.now(),
-      txHash: hash,
-      details: `Safely retried pending beneficiary dispatches for tx ${hash.slice(0, 8)}...`,
-    });
-
-    setRetryingHash(null);
+      updateStatus(hash, "CONFIRMED");
+      addEvent({
+        id: `evt-${Date.now()}-retry`,
+        type: "DISTRIBUTION_COMPLETED",
+        familyId: tx.familyId || 1,
+        actor: address,
+        timestamp: Date.now(),
+        txHash: res.hash,
+        details: `Safely retried beneficiary dispatches for distribution #${tx.distributionId} on Stellar Testnet`,
+      });
+      await syncOnChainTransactions();
+    } catch (err: any) {
+      updateStatus(hash, "FAILED", err.message);
+      alert(err.message || "Failed to retry distribution on-chain");
+    } finally {
+      setRetryingHash(null);
+    }
   };
 
   const statusFilters: (TransactionStatus | "ALL")[] = [

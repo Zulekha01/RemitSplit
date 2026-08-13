@@ -81,12 +81,17 @@ export default function DepositPage() {
   const handleConfirmAndSign = async () => {
     if (!family || !activeRule) return;
 
+    if (!address) {
+      setErrorMsg("Please connect your Stellar wallet first.");
+      return;
+    }
+
     setStep("SIGNING");
     setErrorMsg("");
 
     try {
       setIsSimulating(true);
-      const sender = address || family.owner;
+      const sender = address;
       const signerOpts = getSignerOptions();
       setIsSimulating(false);
 
@@ -138,6 +143,7 @@ export default function DepositPage() {
       });
 
       await refreshBalance();
+      await useTransactionStore.getState().syncOnChainTransactions();
       setStep("CONFIRMED");
     } catch (err: any) {
       setErrorMsg(err.message || "Remittance transaction failed on Stellar network.");

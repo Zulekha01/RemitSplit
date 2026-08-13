@@ -74,7 +74,7 @@ export class EventSyncerService {
     }
   }
 
-  private decodeSorobanEvent(rawEvent: any): ActivityEvent | null {
+  public decodeSorobanEvent(rawEvent: any): ActivityEvent | null {
     try {
       const topic0 = rawEvent.topic?.[0] ? stellarRpcService.parseScVal(rawEvent.topic[0]) : "";
       const familyId = rawEvent.topic?.[1] ? Number(stellarRpcService.parseScVal(rawEvent.topic[1])) : 1;

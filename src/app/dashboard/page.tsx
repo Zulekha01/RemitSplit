@@ -32,9 +32,14 @@ import { formatTimestamp, bpsToPercentage, stroopsToXlm } from "@/lib/formatters
 
 export default function DashboardPage() {
   const { address, isConnected, balance, connect } = useWalletStore();
-  const { families, selectedFamilyId, getSelectedFamily } = useFamilyStore();
-  const { transactions } = useTransactionStore();
+  const { families, selectedFamilyId, getSelectedFamily, syncOnChainState } = useFamilyStore();
+  const { transactions, syncOnChainTransactions } = useTransactionStore();
   const { events } = useActivityStore();
+
+  React.useEffect(() => {
+    syncOnChainState();
+    syncOnChainTransactions();
+  }, [syncOnChainState, syncOnChainTransactions]);
 
   const family = getSelectedFamily();
   const activeRule = family?.activeRule;
@@ -60,7 +65,7 @@ export default function DashboardPage() {
           <div className="space-y-0.5">
             <div className="flex items-center space-x-3">
               <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373]">
-                GROUP LEDGER · #{family?.id || 1}
+                GROUP LEDGER · {family ? `#${family.id}` : "ON-CHAIN"}
               </span>
               <Badge variant="editorial">ACTIVE RECORD</Badge>
             </div>
@@ -228,26 +233,32 @@ export default function DashboardPage() {
               </div>
 
               <div className="divide-y divide-[#111111]">
-                {members.map((m) => (
-                  <div key={m.address} className="p-3.5 flex items-center justify-between text-xs font-mono">
-                    <div>
-                      <span className="font-serif font-bold block text-[#111111] text-sm">
-                        {m.name}
-                      </span>
-                      <span className="text-[10px] text-[#737373]">
-                        {m.address.slice(0, 6)}...{m.address.slice(-6)}
-                      </span>
-                    </div>
-                    <Badge variant={m.role === "Sender" ? "default" : "secondary"}>
-                      {m.role}
-                    </Badge>
+                {members.length === 0 ? (
+                  <div className="p-6 text-center text-xs font-mono text-[#737373]">
+                    No members registered yet on-chain.
                   </div>
-                ))}
+                ) : (
+                  members.map((m) => (
+                    <div key={m.address} className="p-3.5 flex items-center justify-between text-xs font-mono">
+                      <div>
+                        <span className="font-serif font-bold block text-[#111111] text-sm">
+                          {m.name}
+                        </span>
+                        <span className="text-[10px] text-[#737373]">
+                          {m.address.slice(0, 6)}...{m.address.slice(-6)}
+                        </span>
+                      </div>
+                      <Badge variant={m.role === "Sender" ? "default" : "secondary"}>
+                        {m.role}
+                      </Badge>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
             <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] text-[10px] font-mono text-[#525252]">
-              Family Owner: <span className="font-bold text-[#111111]">{family?.owner.slice(0, 6)}...</span>
+              Family Owner: <span className="font-bold text-[#111111]">{family?.owner ? `${family.owner.slice(0, 6)}...` : "None"}</span>
             </div>
           </div>
         </div>
@@ -264,29 +275,35 @@ export default function DashboardPage() {
           </div>
 
           <div className="divide-y divide-[#111111]">
-            {transactions.slice(0, 4).map((tx) => (
-              <div
-                key={tx.hash}
-                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono hover:bg-[#F5F5F5] transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-sm text-[#111111] font-serif">
-                      {tx.type.replace("_", " ")}
-                    </span>
-                    <StatusBadge status={tx.status} />
-                  </div>
-                  <span className="text-[11px] text-[#737373]">
-                    Timestamp: {formatTimestamp(tx.createdAt)}
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-6">
-                  {tx.amount && <AmountDisplay stroops={tx.amount} size="md" />}
-                  <ExplorerLink type="tx" value={tx.hash} />
-                </div>
+            {transactions.length === 0 ? (
+              <div className="p-8 text-center text-xs font-mono text-[#737373]">
+                No on-chain dispatches or transactions recorded yet.
               </div>
-            ))}
+            ) : (
+              transactions.slice(0, 4).map((tx) => (
+                <div
+                  key={tx.hash}
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono hover:bg-[#F5F5F5] transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-sm text-[#111111] font-serif">
+                        {tx.type.replace("_", " ")}
+                      </span>
+                      <StatusBadge status={tx.status} />
+                    </div>
+                    <span className="text-[11px] text-[#737373]">
+                      Timestamp: {formatTimestamp(tx.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-6">
+                    {tx.amount && <AmountDisplay stroops={tx.amount} size="md" />}
+                    <ExplorerLink type="tx" value={tx.hash} />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

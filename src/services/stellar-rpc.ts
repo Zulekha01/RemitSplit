@@ -73,12 +73,13 @@ export class StellarRpcService {
   ): Promise<any> {
     try {
       const contract = new Contract(contractId);
-      const dummyAccount = new Account(
+      // Soroban read-only simulation requires an account object to construct the simulation envelope
+      const simulationAccount = new Account(
         "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
         "0"
       );
 
-      const tx = new TransactionBuilder(dummyAccount, {
+      const tx = new TransactionBuilder(simulationAccount, {
         fee: "100",
         networkPassphrase: NETWORK_PASSPHRASE,
       })

@@ -39,35 +39,42 @@ export default function RulesPage() {
 
   const handleActivate = async (version: number) => {
     if (!family) return;
+    if (!address) {
+      alert("Please connect your Stellar wallet first.");
+      return;
+    }
     setLoadingVersion(version);
     try {
-      const caller = address || family.owner;
+      const caller = address;
       const signerOpts = getSignerOptions();
       const hash = await activateRule(family.id, version, caller, signerOpts);
 
-      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "ACTIVATE_RULE",
-        status: "CONFIRMED",
-        familyId: family.id,
-        familyName: family.name,
-        depositor: caller,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      if (hash) {
+        addTransaction({
+          hash,
+          type: "ACTIVATE_RULE",
+          status: "CONFIRMED",
+          familyId: family.id,
+          familyName: family.name,
+          depositor: caller,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "RULE_ACTIVATED",
-        familyId: family.id,
-        actor: caller,
-        timestamp: Date.now(),
-        txHash,
-        details: `Activated Rule Version ${version} for ${family.name} on Stellar Testnet`,
-      });
+        addEvent({
+          id: `evt-${Date.now()}`,
+          type: "RULE_ACTIVATED",
+          familyId: family.id,
+          actor: caller,
+          timestamp: Date.now(),
+          txHash: hash,
+          details: `Activated Rule Version ${version} for ${family.name} on Stellar Testnet`,
+        });
+      }
 
       await syncOnChainState(family.id);
+    } catch (err: any) {
+      alert(err.message || "Failed to activate rule on-chain");
     } finally {
       setLoadingVersion(null);
     }
@@ -75,34 +82,43 @@ export default function RulesPage() {
 
   const handleDeactivate = async () => {
     if (!family) return;
+    if (!address) {
+      alert("Please connect your Stellar wallet first.");
+      return;
+    }
     if (confirm("Are you sure you want to deactivate the active rule? Deposits will be paused until a new rule is activated.")) {
-      const caller = address || family.owner;
+      const caller = address;
       const signerOpts = getSignerOptions();
-      const hash = await deactivateRule(family.id, caller, signerOpts);
+      try {
+        const hash = await deactivateRule(family.id, caller, signerOpts);
 
-      const txHash = hash || ("0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""));
-      addTransaction({
-        hash: txHash,
-        type: "ACTIVATE_RULE",
-        status: "CONFIRMED",
-        familyId: family.id,
-        familyName: family.name,
-        depositor: caller,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+        if (hash) {
+          addTransaction({
+            hash,
+            type: "ACTIVATE_RULE",
+            status: "CONFIRMED",
+            familyId: family.id,
+            familyName: family.name,
+            depositor: caller,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
 
-      addEvent({
-        id: `evt-${Date.now()}`,
-        type: "RULE_DEACTIVATED",
-        familyId: family.id,
-        actor: caller,
-        timestamp: Date.now(),
-        txHash,
-        details: `Deactivated active rule for ${family.name} on Stellar Testnet`,
-      });
+          addEvent({
+            id: `evt-${Date.now()}`,
+            type: "RULE_DEACTIVATED",
+            familyId: family.id,
+            actor: caller,
+            timestamp: Date.now(),
+            txHash: hash,
+            details: `Deactivated active rule for ${family.name} on Stellar Testnet`,
+          });
+        }
 
-      await syncOnChainState(family.id);
+        await syncOnChainState(family.id);
+      } catch (err: any) {
+        alert(err.message || "Failed to deactivate rule on-chain");
+      }
     }
   };
 

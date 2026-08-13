@@ -103,6 +103,7 @@ export interface TransactionRecord {
   error?: string;
   explorerUrl: string;
   retryAction?: () => Promise<void>;
+  distributionId?: number;
 }
 
 export interface ActivityEvent {

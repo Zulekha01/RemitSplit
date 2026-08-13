@@ -250,7 +250,7 @@ export default function LandingPage() {
             Ready to Automate Family Remittances?
           </h2>
           <p className="font-body text-base text-[#525252] max-w-lg mx-auto">
-            Connect your Stellar wallet on Testnet or test with our pre-loaded simulator.
+            Connect your Stellar wallet on Testnet to execute live programmable remittances.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -262,7 +262,7 @@ export default function LandingPage() {
             </Link>
             <Link href="/deposit">
               <Button size="lg" variant="outline" className="text-sm px-10">
-                Execute Test Remittance
+                Execute Remittance
               </Button>
             </Link>
           </div>

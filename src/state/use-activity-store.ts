@@ -3,82 +3,73 @@
 import { create } from "zustand";
 import { ActivityEvent } from "@/types";
 import { logger } from "@/lib/logger";
-
-const INITIAL_EVENTS: ActivityEvent[] = [
-  {
-    id: "evt-1",
-    type: "DISTRIBUTION_COMPLETED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    actor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    amount: 10_000_000n, // 1 XLM
-    timestamp: 1788200197000,
-    txHash: "7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca",
-    details: "Automated remittance distribution completed across 2 recipients (0.50 XLM, 0.50 XLM)",
-  },
-  {
-    id: "evt-2",
-    type: "RECIPIENT_PAID",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    actor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    recipient: "GDEEOM6PWOO6RIRSMEOOKGQUEKTYBWR37DBOU6RAPDU5YPR7VNGM6EJX",
-    amount: 5_000_000n, // 0.5 XLM
-    timestamp: 1788200197000 - 1000,
-    txHash: "7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca",
-    details: "Paid 0.50 XLM to Mother Living Allowance on Stellar Testnet",
-  },
-  {
-    id: "evt-3",
-    type: "DEPOSIT_FUNDED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    actor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    amount: 10_000_000n,
-    timestamp: 1788200197000 - 2000,
-    txHash: "7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca",
-    details: "Deposited 1.00 XLM into RemitSplit escrow vault on Stellar Testnet",
-  },
-  {
-    id: "evt-4",
-    type: "RULE_ACTIVATED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    actor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    timestamp: 1788200180000,
-    txHash: "67c72501e9a135a7563a6b3db2de4c7ab5c2bc9e6754fc4bb204d63e1c5bedcb",
-    details: "Active rule set to Version 1 (50% Mother, 50% Sister)",
-  },
-  {
-    id: "evt-5",
-    type: "FAMILY_CREATED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    actor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    timestamp: 1788200057000,
-    txHash: "38a736f3ea7989575cd45cca403ad5420448ed25a7e5f7abf9223c441ef2c5ae",
-    details: "Created family group Aalmi Global Family with remitsplit_deployer as Owner",
-  },
-];
+import { stellarRpcService } from "@/services/stellar-rpc";
+import { eventSyncerService } from "@/services/event-syncer";
 
 interface ActivityStore {
   events: ActivityEvent[];
   filterType: string;
+  isLoadingOnChain: boolean;
   setFilterType: (type: string) => void;
   addEvent: (event: ActivityEvent) => void;
   getFilteredEvents: () => ActivityEvent[];
+  syncOnChainEvents: () => Promise<void>;
 }
 
+const REGISTRY_CONTRACT_ID =
+  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD";
+const DISTRIBUTION_CONTRACT_ID =
+  process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || "CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72";
+
 export const useActivityStore = create<ActivityStore>((set, get) => ({
-  events: INITIAL_EVENTS,
+  events: [],
   filterType: "ALL",
+  isLoadingOnChain: false,
 
   setFilterType: (type) => set({ filterType: type }),
 
+  syncOnChainEvents: async () => {
+    set({ isLoadingOnChain: true });
+    try {
+      const contractIds = [REGISTRY_CONTRACT_ID, DISTRIBUTION_CONTRACT_ID].filter(Boolean);
+      const res = await stellarRpcService.getContractEvents(contractIds, undefined, 50);
+
+      if (res && res.events && res.events.length > 0) {
+        const decodedEvents: ActivityEvent[] = [];
+        for (const rawEv of res.events) {
+          const decoded = eventSyncerService.decodeSorobanEvent(rawEv);
+          if (decoded) {
+            decodedEvents.push(decoded);
+          }
+        }
+
+        set((state) => {
+          const existingIds = new Set(state.events.map((e) => e.id));
+          const newEvents = decodedEvents.filter((e) => !existingIds.has(e.id));
+          return {
+            events: [...newEvents, ...state.events].sort((a, b) => b.timestamp - a.timestamp),
+          };
+        });
+
+        logger.info("ActivityStore", `Loaded ${decodedEvents.length} on-chain events`);
+      }
+    } catch (err) {
+      logger.debug("ActivityStore", "Could not fetch past on-chain events, will listen live", err);
+    } finally {
+      set({ isLoadingOnChain: false });
+    }
+  },
+
   addEvent: (event) => {
-    set((state) => ({
-      events: [event, ...state.events],
-    }));
+    set((state) => {
+      // Prevent duplicate events
+      if (state.events.some((e) => e.id === event.id || (e.txHash && e.txHash === event.txHash && e.type === event.type))) {
+        return state;
+      }
+      return {
+        events: [event, ...state.events],
+      };
+    });
     logger.info("ActivityStore", `New event recorded: ${event.type}`);
   },
 

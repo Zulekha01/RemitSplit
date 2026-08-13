@@ -4,73 +4,97 @@ import { create } from "zustand";
 import { TransactionRecord, TransactionStatus, TransactionType } from "@/types";
 import { getExplorerUrl } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
-
-const INITIAL_TRANSACTIONS: TransactionRecord[] = [
-  {
-    hash: "7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca",
-    type: "DISTRIBUTE",
-    status: "CONFIRMED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    amount: 10_000_000n, // 1 XLM
-    depositor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    createdAt: 1788200197000,
-    updatedAt: 1788200197000 + 1200,
-    explorerUrl: getExplorerUrl("tx", "7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca"),
-  },
-  {
-    hash: "67c72501e9a135a7563a6b3db2de4c7ab5c2bc9e6754fc4bb204d63e1c5bedcb",
-    type: "ACTIVATE_RULE",
-    status: "CONFIRMED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    depositor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    createdAt: 1788200180000,
-    updatedAt: 1788200180000 + 1100,
-    explorerUrl: getExplorerUrl("tx", "67c72501e9a135a7563a6b3db2de4c7ab5c2bc9e6754fc4bb204d63e1c5bedcb"),
-  },
-  {
-    hash: "2c6cae3683d854340696483ad4225f8cdf07352e1505717287780a423e496b73",
-    type: "CREATE_RULE",
-    status: "CONFIRMED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    depositor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    createdAt: 1788200150000,
-    updatedAt: 1788200150000 + 1000,
-    explorerUrl: getExplorerUrl("tx", "2c6cae3683d854340696483ad4225f8cdf07352e1505717287780a423e496b73"),
-  },
-  {
-    hash: "38a736f3ea7989575cd45cca403ad5420448ed25a7e5f7abf9223c441ef2c5ae",
-    type: "CREATE_FAMILY",
-    status: "CONFIRMED",
-    familyId: 1,
-    familyName: "Aalmi Global Family",
-    depositor: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-    createdAt: 1788200057000,
-    updatedAt: 1788200057000 + 1000,
-    explorerUrl: getExplorerUrl("tx", "38a736f3ea7989575cd45cca403ad5420448ed25a7e5f7abf9223c441ef2c5ae"),
-  },
-];
+import { distributionContractService } from "@/services/distribution-contract";
 
 interface TransactionStore {
   transactions: TransactionRecord[];
   filterStatus: TransactionStatus | "ALL";
   filterType: TransactionType | "ALL";
+  isLoadingOnChain: boolean;
   setFilterStatus: (status: TransactionStatus | "ALL") => void;
   setFilterType: (type: TransactionType | "ALL") => void;
   addTransaction: (tx: Omit<TransactionRecord, "explorerUrl">) => void;
   updateStatus: (hash: string, status: TransactionStatus, error?: string) => void;
   getFilteredTransactions: () => TransactionRecord[];
+  syncOnChainTransactions: () => Promise<void>;
 }
 
 export const useTransactionStore = create<TransactionStore>((set, get) => ({
-  transactions: INITIAL_TRANSACTIONS,
+  transactions: [],
   filterStatus: "ALL",
   filterType: "ALL",
+  isLoadingOnChain: false,
 
   setFilterStatus: (status) => set({ filterStatus: status }),
   setFilterType: (type) => set({ filterType: type }),
+
+  syncOnChainTransactions: async () => {
+    set({ isLoadingOnChain: true });
+    try {
+      const count = await distributionContractService.fetchDistributionCount();
+      if (count === 0) {
+        set({ isLoadingOnChain: false });
+        return;
+      }
+
+      const onChainDistributions: TransactionRecord[] = [];
+
+      for (let id = 1; id <= count; id++) {
+        try {
+          const dist = await distributionContractService.fetchDistribution(id);
+          if (!dist) continue;
+
+          let status: TransactionStatus = "CONFIRMED";
+          if (dist.status === "Created" || dist.status === "DepositPending") {
+            status = "PENDING";
+          } else if (dist.status === "Funded" || dist.status === "Processing") {
+            status = "PROCESSING";
+          } else if (dist.status === "Retryable" || dist.status === "PartiallyCompleted") {
+            status = "RETRYABLE";
+          } else if (dist.status === "Failed") {
+            status = "FAILED";
+          }
+
+          const txHash = dist.txHash || `dist-${dist.id}`;
+
+          onChainDistributions.push({
+            hash: txHash,
+            type: "DISTRIBUTE",
+            status,
+            familyId: dist.familyId,
+            familyName: `Family Vault #${dist.familyId}`,
+            amount: dist.grossAmount,
+            depositor: dist.depositor,
+            createdAt: dist.createdAt,
+            updatedAt: dist.completedAt || dist.createdAt,
+            distributionId: dist.id,
+            explorerUrl: getExplorerUrl(
+              dist.txHash ? "tx" : "contract",
+              dist.txHash || process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || ""
+            ),
+          });
+        } catch (err) {
+          logger.debug("TxStore", `Error reading distribution ${id}`, err);
+        }
+      }
+
+      set((state) => {
+        // Merge with any client-submitted transactions that aren't yet in on-chain distributions
+        const nonDistTx = state.transactions.filter(
+          (t) => t.type !== "DISTRIBUTE" || !onChainDistributions.some((d) => d.hash === t.hash || (d.distributionId && d.distributionId === t.distributionId))
+        );
+        return {
+          transactions: [...nonDistTx, ...onChainDistributions].sort((a, b) => b.createdAt - a.createdAt),
+        };
+      });
+
+      logger.info("TxStore", `Synced ${onChainDistributions.length} on-chain distributions`);
+    } catch (err) {
+      logger.error("TxStore", "Failed to sync on-chain distributions", err);
+    } finally {
+      set({ isLoadingOnChain: false });
+    }
+  },
 
   addTransaction: (tx) => {
     const fullTx: TransactionRecord = {
@@ -79,7 +103,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     };
 
     set((state) => ({
-      transactions: [fullTx, ...state.transactions],
+      transactions: [fullTx, ...state.transactions.filter((t) => t.hash !== tx.hash)],
     }));
 
     logger.info("TxStore", `New transaction recorded: ${tx.type} (${tx.hash})`);
