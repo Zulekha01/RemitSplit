@@ -32,9 +32,13 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [logs, setLogs] = useState(logger.getLogs());
 
-  const handleSaveConfig = (e: React.FormEvent) => {
+  const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaved(true);
+    const { registryContractService } = await import("@/services/registry-contract");
+    const { distributionContractService } = await import("@/services/distribution-contract");
+    registryContractService.setContractId(registryContractId);
+    distributionContractService.setContractId(distributionContractId);
     logger.info("Settings", "Updated contract configuration", {
       registryContractId,
       distributionContractId,

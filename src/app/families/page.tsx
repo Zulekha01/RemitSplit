@@ -82,21 +82,15 @@ export default function FamiliesPage() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
-
-        addEvent({
-          id: `evt-${Date.now()}`,
-          type: "FAMILY_CREATED",
-          familyId: newId,
-          actor: ownerAddress,
-          timestamp: Date.now(),
-          txHash: hash,
-          details: `Registered new family group: "${newFamilyName.trim()}" on Stellar Testnet`,
-        });
       }
 
       setNewFamilyName("");
       setCreateFamilyOpen(false);
-      await syncOnChainState(newId);
+      await Promise.all([
+        syncOnChainState(newId),
+        useActivityStore.getState().syncOnChainEvents(),
+        useTransactionStore.getState().syncOnChainTransactions(),
+      ]);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to create family record");
     } finally {
@@ -136,24 +130,17 @@ export default function FamiliesPage() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
-
-        addEvent({
-          id: `evt-${Date.now()}`,
-          type: "MEMBER_ADDED",
-          familyId: family.id,
-          actor: caller,
-          recipient: newMemberAddress.trim(),
-          timestamp: Date.now(),
-          txHash: hash,
-          details: `Added ${newMemberName.trim()} (${newMemberRole}) to family registry on-chain`,
-        });
       }
 
       setNewMemberName("");
       setNewMemberAddress("");
       setNewMemberRole("Recipient");
       setAddMemberOpen(false);
-      await syncOnChainState(family.id);
+      await Promise.all([
+        syncOnChainState(family.id),
+        useActivityStore.getState().syncOnChainEvents(),
+        useTransactionStore.getState().syncOnChainTransactions(),
+      ]);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to add member to ledger");
     } finally {
@@ -189,19 +176,12 @@ export default function FamiliesPage() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
-
-        addEvent({
-          id: `evt-${Date.now()}`,
-          type: "MEMBER_REMOVED",
-          familyId: family.id,
-          actor: caller,
-          recipient: memberAddress,
-          timestamp: Date.now(),
-          txHash: hash,
-          details: `Removed member ${memberAddress} from family group on-chain`,
-        });
       }
-      await syncOnChainState(family.id);
+      await Promise.all([
+        syncOnChainState(family.id),
+        useActivityStore.getState().syncOnChainEvents(),
+        useTransactionStore.getState().syncOnChainTransactions(),
+      ]);
     }
   };
 

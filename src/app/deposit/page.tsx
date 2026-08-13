@@ -124,30 +124,11 @@ export default function DepositPage() {
         updatedAt: Date.now(),
       });
 
-      addEvent({
-        id: `evt-${Date.now()}-dep`,
-        type: "DEPOSIT_FUNDED",
-        familyId: family.id,
-        actor: sender,
-        amount: amountStroops,
-        timestamp: Date.now(),
-        txHash: hash,
-        details: `Deposited ${amountStr} XLM into RemitSplit Escrow Vault on Stellar Testnet`,
-      });
-
-      addEvent({
-        id: `evt-${Date.now()}-comp`,
-        type: "DISTRIBUTION_COMPLETED",
-        familyId: family.id,
-        actor: sender,
-        amount: amountStroops,
-        timestamp: Date.now(),
-        txHash: hash,
-        details: `Settled ${amountStr} XLM across ${activeRule.allocations.length} family recipients.`,
-      });
-
       await refreshBalance();
-      await useTransactionStore.getState().syncOnChainTransactions();
+      await Promise.all([
+        useTransactionStore.getState().syncOnChainTransactions(),
+        useActivityStore.getState().syncOnChainEvents(),
+      ]);
       setStep("CONFIRMED");
     } catch (err: any) {
       setErrorMsg(err.message || "Remittance transaction failed on Stellar network.");

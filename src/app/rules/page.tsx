@@ -66,19 +66,13 @@ export default function RulesPage() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
-
-        addEvent({
-          id: `evt-${Date.now()}`,
-          type: "RULE_ACTIVATED",
-          familyId: family.id,
-          actor: caller,
-          timestamp: Date.now(),
-          txHash: hash,
-          details: `Activated Rule Version ${version} for ${family.name} on Stellar Testnet`,
-        });
       }
 
-      await syncOnChainState(family.id);
+      await Promise.all([
+        syncOnChainState(family.id),
+        useActivityStore.getState().syncOnChainEvents(),
+        useTransactionStore.getState().syncOnChainTransactions(),
+      ]);
     } catch (err: any) {
       alert(err.message || "Failed to activate rule on-chain");
     } finally {
@@ -109,19 +103,13 @@ export default function RulesPage() {
             createdAt: Date.now(),
             updatedAt: Date.now(),
           });
-
-          addEvent({
-            id: `evt-${Date.now()}`,
-            type: "RULE_DEACTIVATED",
-            familyId: family.id,
-            actor: caller,
-            timestamp: Date.now(),
-            txHash: hash,
-            details: `Deactivated active rule for ${family.name} on Stellar Testnet`,
-          });
         }
 
-        await syncOnChainState(family.id);
+        await Promise.all([
+          syncOnChainState(family.id),
+          useActivityStore.getState().syncOnChainEvents(),
+          useTransactionStore.getState().syncOnChainTransactions(),
+        ]);
       } catch (err: any) {
         alert(err.message || "Failed to deactivate rule on-chain");
       }

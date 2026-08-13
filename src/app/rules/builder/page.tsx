@@ -45,21 +45,31 @@ export default function RuleBuilderPage() {
   const [strategy, setStrategy] = useState<AllocationStrategy>("Percentage");
   const [items, setItems] = useState<BuilderItem[]>([]);
 
-  // Initialize items from on-chain recipient members once loaded
+  // Initialize items dynamically from on-chain recipient members
   React.useEffect(() => {
     if (items.length === 0 && recipientMembers.length > 0) {
-      if (recipientMembers.length >= 2) {
-        setItems([
-          { recipient: recipientMembers[0].address, amountStr: "50", label: recipientMembers[0].name },
-          { recipient: recipientMembers[1].address, amountStr: "50", label: recipientMembers[1].name },
-        ]);
+      const count = recipientMembers.length;
+      if (strategy === "Percentage") {
+        const baseShare = Math.floor(10000 / count) / 100;
+        const remainder = Math.round((100 - baseShare * count) * 100) / 100;
+        setItems(
+          recipientMembers.map((m, idx) => ({
+            recipient: m.address,
+            amountStr: (idx === count - 1 ? baseShare + remainder : baseShare).toFixed(2),
+            label: m.name,
+          }))
+        );
       } else {
-        setItems([
-          { recipient: recipientMembers[0].address, amountStr: "100", label: recipientMembers[0].name },
-        ]);
+        setItems(
+          recipientMembers.map((m) => ({
+            recipient: m.address,
+            amountStr: "100",
+            label: m.name,
+          }))
+        );
       }
     }
-  }, [recipientMembers, items.length]);
+  }, [recipientMembers, items.length, strategy]);
 
   const [autoActivate, setAutoActivate] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,19 +205,13 @@ export default function RuleBuilderPage() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
-
-        addEvent({
-          id: `evt-${Date.now()}`,
-          type: "RULE_CREATED",
-          familyId: family.id,
-          actor: creator,
-          timestamp: Date.now(),
-          txHash,
-          details: `Formulated programmable Rule Version ${newVersion} (${strategy}) on Stellar Testnet`,
-        });
       }
 
-      await syncOnChainState(family.id);
+      await Promise.all([
+        syncOnChainState(family.id),
+        useActivityStore.getState().syncOnChainEvents(),
+        useTransactionStore.getState().syncOnChainTransactions(),
+      ]);
       router.push("/rules");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to deploy rule on-chain");
