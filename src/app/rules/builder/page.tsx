@@ -206,23 +206,23 @@ export default function RuleBuilderPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="border-b-4 border-[#111111] pb-6">
+        <div className="border-b-2 border-[#111111] pb-3">
           <Link
             href="/rules"
-            className="inline-flex items-center font-mono text-xs uppercase font-bold text-[#111111] hover:text-[#CC0000] mb-3"
+            className="inline-flex items-center font-mono text-[11px] uppercase font-bold text-[#111111] hover:text-[#CC0000] mb-2"
           >
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            <ArrowLeft className="h-3 w-3 mr-1" />
             BACK TO RULES ARCHIVE
           </Link>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block">
             DETERMINISTIC ALGORITHM BUILDER
           </span>
-          <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+          <h1 className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#111111]">
             Program Split Rule
           </h1>
-          <p className="font-body text-xs sm:text-sm text-[#525252]">
+          <p className="font-body text-xs text-[#525252]">
             Formulate mathematically enforced remittance distribution parameters for <span className="font-bold text-[#111111]">{family?.name}</span>.
           </p>
         </div>

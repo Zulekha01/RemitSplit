@@ -153,16 +153,16 @@ export default function DepositPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 max-w-3xl mx-auto font-mono text-xs">
+      <div className="space-y-6 max-w-3xl mx-auto font-mono text-xs">
         {/* Header */}
-        <div className="border-b-4 border-[#111111] pb-6">
-          <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+        <div className="border-b-2 border-[#111111] pb-3">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block">
             OFFICIAL FINANCIAL DISPATCH · ATOMIC SETTLEMENT
           </span>
-          <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+          <h1 className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#111111]">
             Deposit &amp; Split
           </h1>
-          <p className="font-body text-xs sm:text-sm text-[#525252]">
+          <p className="font-body text-xs text-[#525252]">
             Single-entry escrow deposit automatically divided across family recipients according to active rule parameters.
           </p>
         </div>

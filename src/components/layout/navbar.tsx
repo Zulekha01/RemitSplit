@@ -30,51 +30,51 @@ export function Navbar() {
   });
 
   return (
-    <header className="sticky top-0 z-40 bg-[#F9F9F7] border-b-4 border-[#111111] text-[#111111]">
-      {/* Top Gazette Sub-header */}
-      <div className="border-b border-[#111111] px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[#525252] flex flex-col sm:flex-row items-center justify-between gap-1 max-w-7xl mx-auto">
-        <div className="flex items-center space-x-3">
+    <header className="sticky top-0 z-40 bg-[#F9F9F7] border-b-2 border-[#111111] text-[#111111]">
+      {/* Sleek Gazette Sub-header Strip */}
+      <div className="border-b border-[#E5E5E0] bg-[#F4F4F0] px-4 py-1 text-[9px] font-mono uppercase tracking-widest text-[#737373] hidden sm:flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center space-x-2">
           <span className="font-bold text-[#111111]">VOL. I · NO. 42</span>
-          <span>|</span>
+          <span>·</span>
           <span>{currentDate}</span>
-          <span>|</span>
-          <span>STELLAR TESTNET EDITION</span>
+          <span>·</span>
+          <span className="text-[#16A34A] font-bold">● STELLAR TESTNET</span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-[#CC0000] font-black">PRICE: $0.00 / FREE</span>
-          <span>|</span>
-          <span>SETTLED VIA SOROBAN</span>
+          <span className="text-[#CC0000] font-bold">FEES: &lt;0.0001 XLM</span>
+          <span>·</span>
+          <span>SOROBAN SETTLEMENT</span>
         </div>
       </div>
 
-      {/* Main Masthead Banner */}
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Main Streamlined Navbar */}
+      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
         {/* Brand Masthead Title */}
-        <Link href="/" className="group flex flex-col">
-          <span className="font-serif text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-none text-[#111111] group-hover:text-[#CC0000] transition-colors">
+        <Link href="/" className="group flex items-baseline space-x-2">
+          <span className="font-serif text-xl sm:text-2xl font-black tracking-tight leading-none text-[#111111] group-hover:text-[#CC0000] transition-colors">
             REMIT SPLIT
           </span>
-          <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] font-bold text-[#737373] mt-0.5">
-            The Programmable Remittance Gazette
+          <span className="hidden sm:inline-block font-mono text-[9px] uppercase tracking-widest font-semibold text-[#737373] border-l border-[#CCCCCC] pl-2">
+            Programmable Remittance Gazette
           </span>
         </Link>
 
         {/* Right Action & Wallet */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <Link href="/deposit" className="hidden sm:inline-block">
-            <Button variant="editorial" size="sm">
-              <Send className="h-3.5 w-3.5 mr-1.5" />
+            <Button variant="editorial" size="sm" className="h-8 px-3 text-xs">
+              <Send className="h-3 w-3 mr-1.5" />
               Deposit &amp; Split
             </Button>
           </Link>
 
           {isConnected ? (
-            <div className="flex items-center space-x-2 border-2 border-[#111111] bg-white p-1">
-              <div className="hidden md:flex flex-col text-right px-2">
-                <span className="font-mono text-[11px] font-bold text-[#111111]">
+            <div className="flex items-center space-x-2 border border-[#111111] bg-white px-2 py-1">
+              <div className="flex flex-col text-right">
+                <span className="font-mono text-[11px] font-bold text-[#111111] leading-tight">
                   {parseFloat(balance).toFixed(2)} XLM
                 </span>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-[#737373]">
+                <span className="font-mono text-[9px] tracking-wider text-[#737373] leading-none">
                   {truncateAddress(address || "")}
                 </span>
               </div>
@@ -82,10 +82,10 @@ export function Navbar() {
                 variant="outline"
                 size="sm"
                 onClick={disconnect}
-                className="h-8 px-2 border-[#111111] text-xs"
+                className="h-6 w-6 p-0 border-[#111111] text-xs hover:bg-[#CC0000] hover:text-white transition-colors"
                 title="Disconnect Wallet"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-3 w-3" />
               </Button>
             </div>
           ) : (
@@ -94,6 +94,7 @@ export function Navbar() {
               size="sm"
               onClick={() => connect()}
               disabled={isConnecting}
+              className="h-8 px-3 text-xs"
             >
               <Wallet className="h-3.5 w-3.5 mr-1.5" />
               {isConnecting ? "Connecting..." : "Connect Wallet"}
@@ -103,10 +104,10 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden border-2 border-[#111111] p-2 hover:bg-[#111111] hover:text-white transition-colors"
+            className="md:hidden border border-[#111111] p-1.5 hover:bg-[#111111] hover:text-white transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>

@@ -16,7 +16,7 @@ export function NetworkBanner() {
   ];
 
   return (
-    <div className="bg-[#111111] text-[#F9F9F7] py-1.5 px-4 overflow-hidden border-b-2 border-[#111111] select-none text-[11px] font-mono font-bold tracking-widest uppercase">
+    <div className="bg-[#111111] text-[#F9F9F7] py-0.5 px-4 overflow-hidden border-b border-[#222222] select-none text-[9.5px] font-mono font-bold tracking-widest uppercase">
       <div className="animate-marquee whitespace-nowrap flex items-center space-x-8">
         {[...tickerItems, ...tickerItems].map((item, idx) => (
           <span key={idx} className="inline-flex items-center space-x-2">

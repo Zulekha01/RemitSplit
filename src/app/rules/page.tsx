@@ -108,17 +108,17 @@ export default function RulesPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="border-b-4 border-[#111111] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+        <div className="border-b-2 border-[#111111] pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block">
               ALGORITHMIC SPLIT RULES · ON-CHAIN VERSIONING
             </span>
-            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+            <h1 className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#111111]">
               Rule Version Archive
             </h1>
-            <p className="font-body text-xs sm:text-sm text-[#525252]">
+            <p className="font-body text-xs text-[#525252]">
               Historical ledger of programmable remittance rules and active distribution algorithms.
             </p>
           </div>

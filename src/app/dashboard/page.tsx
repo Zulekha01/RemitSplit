@@ -54,20 +54,20 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Top Masthead Row */}
-        <div className="border-b-4 border-[#111111] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-1">
+        <div className="border-b-2 border-[#111111] pb-3 flex flex-col md:flex-row md:items-end justify-between gap-3">
+          <div className="space-y-0.5">
             <div className="flex items-center space-x-3">
-              <span className="font-mono text-xs uppercase tracking-widest text-[#737373]">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373]">
                 GROUP LEDGER · #{family?.id || 1}
               </span>
               <Badge variant="editorial">ACTIVE RECORD</Badge>
             </div>
-            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+            <h1 className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#111111]">
               {family?.name || "Remittance Overview"}
             </h1>
-            <p className="font-body text-xs sm:text-sm text-[#525252]">
+            <p className="font-body text-xs text-[#525252]">
               Real-time audit log, active allocation distribution, and settlement ledger.
             </p>
           </div>

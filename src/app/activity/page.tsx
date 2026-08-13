@@ -32,20 +32,20 @@ export default function ActivityPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 font-mono text-xs">
+      <div className="space-y-6 font-mono text-xs">
         {/* Header */}
-        <div className="border-b-4 border-[#111111] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#737373] block">
+        <div className="border-b-2 border-[#111111] pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#737373] block">
               SOROBAN TELEGRAPH WIRE · LIVE EMISSIONS
             </span>
             <div className="flex items-center space-x-3">
-              <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-tight text-[#111111]">
+              <h1 className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#111111]">
                 Live Wire Feed
               </h1>
-              <span className="text-[#CC0000] font-black text-sm animate-pulse">● LIVE STREAM</span>
+              <span className="text-[#CC0000] font-black text-xs animate-pulse">● LIVE STREAM</span>
             </div>
-            <p className="font-body text-xs sm:text-sm text-[#525252]">
+            <p className="font-body text-xs text-[#525252]">
               Direct Soroban RPC event decodings emitted by Stellar Testnet contracts.
             </p>
           </div>

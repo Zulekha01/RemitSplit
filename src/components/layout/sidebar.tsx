@@ -35,11 +35,11 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r-2 border-[#111111] bg-[#F9F9F7] flex flex-col justify-between shrink-0 min-h-[calc(100vh-120px)] font-mono text-xs">
-      <div className="space-y-6">
+    <aside className="w-64 border-r-2 border-[#111111] bg-[#F9F9F7] flex flex-col justify-between shrink-0 min-h-[calc(100vh-80px)] font-mono text-xs">
+      <div className="space-y-4">
         {/* Family Group Selector Header */}
-        <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
-          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-1.5">
+        <div className="p-3 border-b-2 border-[#111111] bg-[#F5F5F5]">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-1">
             <span>ACTIVE FAMILY GROUP</span>
             <span className="text-[#CC0000]">●</span>
           </div>
@@ -47,7 +47,7 @@ export function Sidebar() {
           <select
             value={selectedFamilyId}
             onChange={(e) => selectFamily(Number(e.target.value))}
-            className="w-full text-xs font-mono font-bold rounded-none border-2 border-[#111111] bg-[#F9F9F7] px-2.5 py-1.5 text-[#111111] focus:outline-none focus:bg-white"
+            className="w-full text-xs font-mono font-bold rounded-none border-2 border-[#111111] bg-[#F9F9F7] px-2 py-1 text-[#111111] focus:outline-none focus:bg-white"
           >
             {families.map((f) => (
               <option key={f.id} value={f.id}>
