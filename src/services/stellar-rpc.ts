@@ -73,11 +73,9 @@ export class StellarRpcService {
   ): Promise<any> {
     try {
       const contract = new Contract(contractId);
-      // Soroban read-only simulation requires an account object to construct the simulation envelope
-      const simulationAccount = new Account(
-        "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
-        "0"
-      );
+      // Construct a dynamic ephemeral account for read simulation
+      const ephemeralKey = Keypair.random();
+      const simulationAccount = new Account(ephemeralKey.publicKey(), "0");
 
       const tx = new TransactionBuilder(simulationAccount, {
         fee: "100",
@@ -95,6 +93,22 @@ export class StellarRpcService {
     } catch (err) {
       logger.debug("StellarRpc", `Simulation of ${functionName} returned note`, err);
       return null;
+    }
+  }
+
+  /**
+   * Fund a testnet address via official Stellar Friendbot.
+   */
+  async fundWithFriendbot(publicKey: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`);
+      if (!res.ok) {
+        const text = await res.text();
+        return { success: false, message: text || "Friendbot funding failed" };
+      }
+      return { success: true, message: "Account successfully funded with 10,000 Testnet XLM" };
+    } catch (err: any) {
+      return { success: false, message: err.message || "Failed to reach Friendbot service" };
     }
   }
 
@@ -128,15 +142,16 @@ export class StellarRpcService {
 
     let finalTx: Transaction;
 
-    if (devSignerSecret) {
+    if (signTransaction) {
+      // Prioritize the connected wallet's cryptographic signature
+      const signedXdr = await signTransaction(preparedTx.toXDR());
+      finalTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE) as Transaction;
+    } else if (devSignerSecret) {
       const kp = Keypair.fromSecret(devSignerSecret);
       preparedTx.sign(kp);
       finalTx = preparedTx as Transaction;
-    } else if (signTransaction) {
-      const signedXdr = await signTransaction(preparedTx.toXDR());
-      finalTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE) as Transaction;
     } else {
-      throw new Error("No signer provided: need either signTransaction callback or devSignerSecret");
+      throw new Error("No signer provided: connected wallet must provide signTransaction callback");
     }
 
     const sendRes = await this.rpcServer.sendTransaction(finalTx);
@@ -158,7 +173,7 @@ export class StellarRpcService {
   }
 
   /**
-   * Direct JSON-RPC polling for transaction finality.
+   * Direct JSON-RPC polling for transaction finality without fake success fallbacks.
    */
   private async pollTransactionDirect(
     hash: string,
@@ -171,7 +186,10 @@ export class StellarRpcService {
       try {
         const response = await fetch(RPC_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "RemitSplit-Client/1.0",
+          },
           body: JSON.stringify({
             jsonrpc: "2.0",
             id: 1,
@@ -200,8 +218,17 @@ export class StellarRpcService {
       await new Promise((res) => setTimeout(res, intervalMs));
     }
 
-    // If timeout reached, assume pending/optimistic
-    return { status: "SUCCESS" };
+    // Check Horizon as final confirmation fallback
+    try {
+      const tx = await this.horizonServer.transactions().transaction(hash).call();
+      if (tx && tx.successful) {
+        return { status: "SUCCESS", ledger: tx.ledger_attr };
+      }
+    } catch {
+      // Horizon not yet ingested
+    }
+
+    return { status: "PENDING" };
   }
 
   /**

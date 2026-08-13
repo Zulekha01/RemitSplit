@@ -123,14 +123,19 @@ export class EventSyncerService {
         details = `Remittance split distribution completed across all recipients`;
       }
 
+      const eventId = rawEvent.id || `${rawEvent.txHash || Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const timestamp = rawEvent.ledgerClosedAt
+        ? new Date(rawEvent.ledgerClosedAt).getTime()
+        : Date.now();
+
       return {
-        id: `${rawEvent.txHash || Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: eventId,
         type,
         familyId,
         actor: actor || "Sender",
         recipient,
         amount,
-        timestamp: Date.now(),
+        timestamp,
         txHash: rawEvent.txHash || "",
         details,
       };
