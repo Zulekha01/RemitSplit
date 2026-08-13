@@ -4,10 +4,6 @@ import { create } from "zustand";
 import { Horizon, Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 import { logger } from "@/lib/logger";
 
-const DEV_ACCOUNT_ADDRESS = "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG";
-const DEV_ACCOUNT_SECRET =
-  process.env.NEXT_PUBLIC_DEV_ACCOUNT_SECRET ||
-  "";
 const NETWORK_PASSPHRASE =
   process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ||
   "Test SDF Network ; September 2015";
