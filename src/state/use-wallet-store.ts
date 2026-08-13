@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { Horizon, Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 import { logger } from "@/lib/logger";
 
@@ -30,17 +31,19 @@ interface WalletStore {
   };
 }
 
-export const useWalletStore = create<WalletStore>((set, get) => ({
-  address: null,
-  activeSecretKey: null,
-  isConnected: false,
-  network: process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet",
-  balance: "0",
-  walletName: null,
-  isConnecting: false,
-  isFunding: false,
-  error: null,
-  kit: null,
+export const useWalletStore = create<WalletStore>()(
+  persist(
+    (set, get) => ({
+      address: null,
+      activeSecretKey: null,
+      isConnected: false,
+      network: process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet",
+      balance: "0",
+      walletName: null,
+      isConnecting: false,
+      isFunding: false,
+      error: null,
+      kit: null,
 
   connect: async (customAddress?: string) => {
     set({ isConnecting: true, error: null });
@@ -188,6 +191,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   },
 
   disconnect: async () => {
+    try {
+      const { kit } = get();
+      if (kit) await kit.disconnect();
+    } catch {
+      // Ignore
+    }
     set({
       address: null,
       activeSecretKey: null,
@@ -196,6 +205,13 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       walletName: null,
       error: null,
     });
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("remitsplit_wallet_session");
+      } catch {
+        // Ignore
+      }
+    }
     try {
       const { useFamilyStore } = await import("@/state/use-family-store");
       useFamilyStore.getState().selectFamily(0);
@@ -232,8 +248,25 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
 
     // 2. Prioritize Browser Extension (Freighter / xBull / Albedo via Stellar Wallets Kit)
-    if (kit) {
-      const res = await kit.signTransaction(xdrString, {
+    let kitInstance = kit;
+    if (!kitInstance && typeof window !== "undefined") {
+      try {
+        const { StellarWalletsKit, WalletNetwork, allowAllModules } = await import(
+          "@creit.tech/stellar-wallets-kit"
+        );
+        kitInstance = new StellarWalletsKit({
+          network: WalletNetwork.TESTNET,
+          selectedWalletId: "freighter",
+          modules: allowAllModules(),
+        });
+        set({ kit: kitInstance });
+      } catch (err) {
+        logger.debug("Wallet", "Could not instantiate StellarWalletsKit on-demand", err);
+      }
+    }
+
+    if (kitInstance) {
+      const res = await kitInstance.signTransaction(xdrString, {
         networkPassphrase: NETWORK_PASSPHRASE,
       });
       const signedXdr =
@@ -255,4 +288,17 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       signTransaction: get().signTransaction,
     };
   },
-}));
+    }),
+    {
+      name: "remitsplit_wallet_session",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        address: state.address,
+        activeSecretKey: state.activeSecretKey,
+        isConnected: state.isConnected,
+        walletName: state.walletName,
+        balance: state.balance,
+      }),
+    }
+  )
+);

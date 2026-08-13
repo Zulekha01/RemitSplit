@@ -7,12 +7,22 @@ import { useTransactionStore } from "@/state/use-transaction-store";
 import { useActivityStore } from "@/state/use-activity-store";
 import { eventSyncerService } from "@/services/event-syncer";
 
+import { useWalletStore } from "@/state/use-wallet-store";
+import { registryContractService } from "@/services/registry-contract";
+import { distributionContractService } from "@/services/distribution-contract";
+
 function OnChainBootstrap({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Initial fetch from live on-chain contracts
     useFamilyStore.getState().syncOnChainState();
     useTransactionStore.getState().syncOnChainTransactions();
     useActivityStore.getState().syncOnChainEvents();
+
+    // Rehydrate and refresh wallet balance if session was persisted
+    const wallet = useWalletStore.getState();
+    if (wallet.isConnected && wallet.address) {
+      wallet.refreshBalance().catch(() => {});
+    }
 
     // Subscribe to live Soroban contract events
     const unsubscribe = eventSyncerService.subscribe((event) => {
@@ -34,14 +44,10 @@ function OnChainBootstrap({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const registryId =
-      process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID ||
-      "CCOJB3FIN3CCNBCJNUK62FW44V7EG3A6P7WVIEBUW5LBA23LZM7275XD";
-    const distributionId =
-      process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID ||
-      "CBDWDKUVAW2U4THOHADINH3GDVUTEYZZPI6LADORKL3EUCHRZ7G2JL72";
+    const registryId = registryContractService.getContractId();
+    const distributionId = distributionContractService.getContractId();
 
-    eventSyncerService.startPolling([registryId, distributionId], 6000);
+    eventSyncerService.startPolling([registryId, distributionId], 10000);
 
     return () => {
       unsubscribe();

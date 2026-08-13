@@ -32,6 +32,14 @@ export class EventSyncerService {
     this.isPolling = true;
 
     const poll = async () => {
+      // Pause polling if tab is in the background to eliminate lag and CPU waste
+      if (typeof document !== "undefined" && document.hidden) {
+        if (this.isPolling) {
+          this.timerId = setTimeout(poll, intervalMs);
+        }
+        return;
+      }
+
       try {
         const validIds = contractIds.filter(
           (id) => id && id.startsWith("C") && id.length === 56

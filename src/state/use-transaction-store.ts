@@ -66,9 +66,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       const count = await distributionContractService.fetchDistributionCount();
       const onChainDistributions: TransactionRecord[] = [];
 
-      for (let id = 1; id <= count; id++) {
-        try {
-          const dist = await distributionContractService.fetchDistribution(id);
+      if (count > 0) {
+        const ids = Array.from({ length: count }, (_, i) => i + 1);
+        const fetchedDists = await Promise.all(
+          ids.map((id) =>
+            distributionContractService.fetchDistribution(id).catch((err) => {
+              logger.debug("TxStore", `Error reading distribution ${id}`, err);
+              return null;
+            })
+          )
+        );
+
+        for (const dist of fetchedDists) {
           if (!dist) continue;
 
           let status: TransactionStatus = "CONFIRMED";
@@ -100,8 +109,6 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
               dist.txHash || process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || ""
             ),
           });
-        } catch (err) {
-          logger.debug("TxStore", `Error reading distribution ${id}`, err);
         }
       }
 

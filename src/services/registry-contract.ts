@@ -324,15 +324,14 @@ export class RegistryContractService {
     };
   }
 
-  async fetchAllRules(familyId: number): Promise<AllocationRule[]> {
+  async fetchAllRules(familyId: number, maxVersion?: number): Promise<AllocationRule[]> {
     const rules: AllocationRule[] = [];
-    let version = 1;
-    while (true) {
+    const limit = maxVersion !== undefined && maxVersion > 0 ? maxVersion : 5;
+    for (let version = 1; version <= limit; version++) {
       try {
         const rule = await this.fetchRule(familyId, version);
         if (!rule) break;
         rules.push(rule);
-        version++;
       } catch {
         break;
       }

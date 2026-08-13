@@ -60,4 +60,23 @@ describe("On-Chain Stores Initial State & Zero-Mock Guarantee", () => {
     expect(useWalletStore.getState().activeSecretKey).toBeNull();
     expect(useWalletStore.getState().isConnected).toBe(false);
   });
+
+  it("persists wallet connection session in localStorage across refreshes", async () => {
+    useFamilyStore.setState({ syncOnChainState: async () => {} });
+    const pubKey = await useWalletStore.getState().connectWithKeypair(undefined, false);
+    
+    const stored = localStorage.getItem("remitsplit_wallet_session");
+    expect(stored).not.toBeNull();
+    const parsed = JSON.parse(stored!);
+    expect(parsed.state.address).toBe(pubKey);
+    expect(parsed.state.isConnected).toBe(true);
+
+    useWalletStore.getState().disconnect();
+    const storedAfterDisconnect = localStorage.getItem("remitsplit_wallet_session");
+    if (storedAfterDisconnect) {
+      const parsedAfter = JSON.parse(storedAfterDisconnect);
+      expect(parsedAfter.state.isConnected).toBe(false);
+      expect(parsedAfter.state.address).toBeNull();
+    }
+  });
 });

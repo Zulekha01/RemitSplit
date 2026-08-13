@@ -90,7 +90,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
             const [members, activeRule, allRules] = await Promise.all([
               registryContractService.fetchMembers(currentId),
               registryContractService.fetchActiveRule(currentId),
-              registryContractService.fetchAllRules(currentId),
+              registryContractService.fetchAllRules(currentId, fam.activeRuleVersion || 1),
             ]);
 
             const fullFamily: Family = {

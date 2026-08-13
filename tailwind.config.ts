@@ -18,10 +18,10 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        serif: ["'Playfair Display'", "'Times New Roman'", "serif"],
-        body: ["'Lora'", "Georgia", "serif"],
-        sans: ["'Inter'", "'Helvetica Neue'", "sans-serif"],
-        mono: ["'JetBrains Mono'", "'Courier New'", "monospace"],
+        serif: ["var(--font-playfair)", "'Playfair Display'", "'Times New Roman'", "serif"],
+        body: ["var(--font-lora)", "'Lora'", "Georgia", "serif"],
+        sans: ["var(--font-inter)", "'Inter'", "'Helvetica Neue'", "sans-serif"],
+        mono: ["var(--font-mono)", "'JetBrains Mono'", "'Courier New'", "monospace"],
       },
       colors: {
         paper: "#F9F9F7",
