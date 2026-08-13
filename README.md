@@ -1,13 +1,22 @@
-# RemitSplit — Programmable Cross-Border Remittance Splitting on Stellar
+<div align="center">
 
-[![Stellar Green Belt Level 4](https://img.shields.io/badge/Stellar-Green%20Belt%20Level%204-0052FF?style=for-the-badge&logo=stellar&logoColor=white)](https://developers.stellar.org)
-[![Soroban Smart Contracts](https://img.shields.io/badge/Soroban-Rust%20Contracts-7B2CBF?style=for-the-badge)](https://soroban.stellar.org)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com)
+  <img src="./public/logo.png" alt="RemitSplit Logo" width="120" />
 
-> **Programmable Cross-Border Remittance Splitting on Stellar**  
-> *Deposit once from anywhere in the world and automatically split funds among parents, siblings, and dependents according to cryptographic, on-chain programmable allocation rules.*
+  # RemitSplit
+
+  **Programmable Cross-Border Remittance Splitting on Stellar**
+
+  *Deposit once from anywhere in the world and automatically split funds among family members according to cryptographic, on-chain programmable allocation rules on Soroban.*
+
+  <br />
+
+  [![Stellar Green Belt Level 4](https://img.shields.io/badge/Stellar-Green%20Belt%20Level%204-0052FF?style=for-the-badge&logo=stellar&logoColor=white)](https://developers.stellar.org)
+  [![Soroban Smart Contracts](https://img.shields.io/badge/Soroban-Rust%20Contracts-7B2CBF?style=for-the-badge)](https://soroban.stellar.org)
+  [![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+  [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+  [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com)
+
+</div>
 
 ---
 

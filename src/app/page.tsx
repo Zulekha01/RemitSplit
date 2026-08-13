@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Send,
   Sliders,
@@ -33,11 +34,23 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Main Headline (8 cols) */}
             <div className="lg:col-span-8 space-y-6 lg:border-r-2 lg:border-[#111111] lg:pr-8">
-              <div className="flex items-center space-x-2">
-                <Badge variant="editorial">BREAKING DISPATCH</Badge>
-                <span className="font-mono text-xs uppercase tracking-widest text-[#737373]">
-                  SPECIAL REPORT ON STELLAR SOROBAN
-                </span>
+              <div className="flex items-center space-x-3">
+                <div className="relative h-10 w-10 shrink-0 border-2 border-[#111111] bg-white p-1 shadow-[2px_2px_0px_0px_#111111]">
+                  <Image
+                    src="/logo.png"
+                    alt="RemitSplit Emblem"
+                    fill
+                    sizes="40px"
+                    className="object-contain p-0.5"
+                    priority
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                  <Badge variant="editorial">BREAKING DISPATCH</Badge>
+                  <span className="font-mono text-xs uppercase tracking-widest text-[#737373]">
+                    SPECIAL REPORT ON STELLAR SOROBAN
+                  </span>
+                </div>
               </div>
 
               <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black tracking-tighter leading-[0.9] text-[#111111]">
@@ -268,6 +281,32 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      {/* Editorial Broadsheet Footer */}
+      <footer className="border-t-2 border-[#111111] bg-[#F4F4F0] py-8 px-4 font-mono text-xs text-[#525252]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="relative h-7 w-7 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="RemitSplit Logo"
+                fill
+                sizes="28px"
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <span className="font-serif font-black text-sm text-[#111111] tracking-tight">REMIT SPLIT</span>
+              <span className="text-[10px] text-[#737373] block">Programmable Cross-Border Remittance Protocol · Stellar Soroban</span>
+            </div>
+          </div>
+          <div className="text-[10px] text-[#737373] text-center sm:text-right">
+            <span>VOL. I · ON-CHAIN REVOLUTION</span>
+            <span className="mx-2">·</span>
+            <span>TESTNET CONTRACTS LIVE</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

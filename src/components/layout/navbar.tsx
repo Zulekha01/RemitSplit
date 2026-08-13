@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Wallet,
@@ -50,13 +51,25 @@ export function Navbar() {
       {/* Main Streamlined Navbar */}
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
         {/* Brand Masthead Title */}
-        <Link href="/" className="group flex items-baseline space-x-2">
-          <span className="font-serif text-xl sm:text-2xl font-black tracking-tight leading-none text-[#111111] group-hover:text-[#CC0000] transition-colors">
-            REMIT SPLIT
-          </span>
-          <span className="hidden sm:inline-block font-mono text-[9px] uppercase tracking-widest font-semibold text-[#737373] border-l border-[#CCCCCC] pl-2">
-            Programmable Remittance Gazette
-          </span>
+        <Link href="/" className="group flex items-center space-x-2.5">
+          <div className="relative h-7 w-7 sm:h-8 sm:w-8 shrink-0">
+            <Image
+              src="/logo.png"
+              alt="RemitSplit Logo"
+              fill
+              sizes="32px"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="font-serif text-xl sm:text-2xl font-black tracking-tight leading-none text-[#111111] group-hover:text-[#CC0000] transition-colors">
+              REMIT SPLIT
+            </span>
+            <span className="hidden sm:inline-block font-mono text-[9px] uppercase tracking-widest font-semibold text-[#737373] border-l border-[#CCCCCC] pl-2">
+              Programmable Remittance Gazette
+            </span>
+          </div>
         </Link>
 
         {/* Right Action & Wallet */}

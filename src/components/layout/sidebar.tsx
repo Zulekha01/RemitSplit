@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -109,9 +110,20 @@ export function Sidebar() {
       </div>
 
       {/* Editorial Footer Note */}
-      <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] text-[10px] space-y-1 text-[#737373]">
-        <div className="font-bold text-[#111111] uppercase tracking-wider">
-          STAMP OF VERIFICATION
+      <div className="p-4 border-t-2 border-[#111111] bg-[#F5F5F5] text-[10px] space-y-2 text-[#737373]">
+        <div className="flex items-center space-x-2">
+          <div className="relative h-4 w-4 shrink-0">
+            <Image
+              src="/logo.png"
+              alt="RemitSplit Stamp"
+              fill
+              sizes="16px"
+              className="object-contain"
+            />
+          </div>
+          <div className="font-bold text-[#111111] uppercase tracking-wider">
+            STAMP OF VERIFICATION
+          </div>
         </div>
         <p className="leading-tight font-body">
           All rule logic executed via audited Soroban contract-to-contract invocations.

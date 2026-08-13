@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   title: "RemitSplit — Programmable Cross-Border Remittance Splitting on Stellar",
   description:
     "Deposit once and automatically split cross-border remittances among family members with programmable on-chain rules and transparent audit trails on Stellar Soroban.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
