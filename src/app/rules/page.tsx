@@ -24,17 +24,23 @@ import { formatTimestamp, bpsToPercentage, stroopsToXlm } from "@/lib/formatters
 export default function RulesPage() {
   const { families, selectedFamilyId, getSelectedFamily, rules, activateRule, deactivateRule, syncOnChainState } =
     useFamilyStore();
-  const { address, getSignerOptions } = useWalletStore();
+  const { address, isConnected, connect, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
+  const userFamilies = address
+    ? families.filter((f) => f.owner === address || f.members?.some((m) => m.address === address))
+    : [];
+
   const family = getSelectedFamily();
-  const familyRules = rules[selectedFamilyId] || [];
+  const familyRules = selectedFamilyId ? rules[selectedFamilyId] || [] : [];
 
   const [loadingVersion, setLoadingVersion] = useState<number | null>(null);
 
   React.useEffect(() => {
-    syncOnChainState(selectedFamilyId);
+    if (selectedFamilyId > 0) {
+      syncOnChainState(selectedFamilyId);
+    }
   }, [selectedFamilyId, syncOnChainState]);
 
   const handleActivate = async (version: number) => {
@@ -141,7 +147,7 @@ export default function RulesPage() {
 
           <div className="flex items-center space-x-3">
             <Link href="/rules/builder">
-              <Button variant="default" size="sm">
+              <Button variant="default" size="sm" disabled={!family}>
                 <Plus className="h-4 w-4 mr-1.5" />
                 Build New Rule
               </Button>
@@ -149,23 +155,54 @@ export default function RulesPage() {
           </div>
         </div>
 
-        {/* Rules Archive */}
-        <div className="space-y-6">
-          {familyRules.length === 0 ? (
-            <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4">
-              <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
-              <h3 className="font-serif text-xl font-bold text-[#111111]">No Rules Formulated Yet</h3>
-              <p className="font-body text-xs text-[#525252] max-w-sm mx-auto">
-                Define how remittances should be split among family members using percentages, fixed amounts, or waterfall priorities.
-              </p>
-              <Link href="/rules/builder">
-                <Button variant="default" size="sm">
-                  Create First Split Rule
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            familyRules.map((rule) => {
+        {/* Rules View */}
+        {!isConnected ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No Stellar Wallet Connected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              Connect your Stellar Testnet wallet to view and manage programmable remittance split rules for your family group.
+            </p>
+            <Button variant="default" onClick={() => connect()}>
+              Connect Stellar Wallet
+            </Button>
+          </div>
+        ) : !family ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No On-Chain Family Vault Selected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              {userFamilies.length > 0
+                ? "Select a family vault from the sidebar to view its algorithmic rule archive."
+                : "No family records registered yet on Stellar Testnet for your account. Register a family group first before creating split rules."}
+            </p>
+            <Link href="/families">
+              <Button variant="default">
+                Go to Family Registry
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {familyRules.length === 0 ? (
+              <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4">
+                <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+                <h3 className="font-serif text-xl font-bold text-[#111111]">No Rules Formulated Yet</h3>
+                <p className="font-body text-xs text-[#525252] max-w-sm mx-auto">
+                  Define how remittances should be split among family members using percentages, fixed amounts, or waterfall priorities.
+                </p>
+                <Link href="/rules/builder">
+                  <Button variant="default" size="sm">
+                    Create First Split Rule
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              familyRules.map((rule) => {
               const isActive = family?.activeRuleVersion === rule.version;
 
               return (
@@ -245,7 +282,8 @@ export default function RulesPage() {
             })
           )}
         </div>
-      </div>
+      )}
+    </div>
     </AppShell>
   );
 }

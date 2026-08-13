@@ -17,11 +17,18 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useFamilyStore } from "@/state/use-family-store";
+import { useWalletStore } from "@/state/use-wallet-store";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { address, isConnected } = useWalletStore();
   const { families, selectedFamilyId, selectFamily, getSelectedFamily } = useFamilyStore();
   const selectedFamily = getSelectedFamily();
+
+  // Only display families that belong to the connected user
+  const userFamilies = address
+    ? families.filter((f) => f.owner === address || f.members?.some((m) => m.address === address))
+    : [];
 
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -41,7 +48,7 @@ export function Sidebar() {
         <div className="p-3 border-b-2 border-[#111111] bg-[#F5F5F5]">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-1">
             <span>ACTIVE FAMILY GROUP</span>
-            <span className="text-[#CC0000]">●</span>
+            <span className={selectedFamily ? "text-[#008000]" : "text-[#737373]"}>●</span>
           </div>
 
           <select
@@ -49,7 +56,14 @@ export function Sidebar() {
             onChange={(e) => selectFamily(Number(e.target.value))}
             className="w-full text-xs font-mono font-bold rounded-none border-2 border-[#111111] bg-[#F9F9F7] px-2 py-1 text-[#111111] focus:outline-none focus:bg-white"
           >
-            {families.map((f) => (
+            <option value={0}>
+              {!isConnected
+                ? "— Connect Wallet First —"
+                : userFamilies.length === 0
+                ? "— No Vaults Found —"
+                : "— Select Family Vault —"}
+            </option>
+            {userFamilies.map((f) => (
               <option key={f.id} value={f.id}>
                 #{f.id} · {f.name}
               </option>

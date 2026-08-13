@@ -28,9 +28,14 @@ import { Role } from "@/types";
 export default function FamiliesPage() {
   const { families, selectedFamilyId, selectFamily, getSelectedFamily, createFamily, addMember, removeMember, syncOnChainState, isLoadingOnChain } =
     useFamilyStore();
-  const { address, getSignerOptions } = useWalletStore();
+  const { address, isConnected, connect, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
+
+  // Families that belong to the user
+  const userFamilies = address
+    ? families.filter((f) => f.owner === address || f.members?.some((m) => m.address === address))
+    : [];
 
   const family = getSelectedFamily();
   const members = family?.members || [];
@@ -230,6 +235,7 @@ export default function FamiliesPage() {
             <Button
               variant="default"
               size="sm"
+              disabled={!family}
               onClick={() => setAddMemberOpen(true)}
             >
               <UserPlus className="h-4 w-4 mr-1.5" />
@@ -238,70 +244,126 @@ export default function FamiliesPage() {
           </div>
         </div>
 
-        {/* Directory Broadsheet Table */}
-        <div className="border-2 border-[#111111] bg-[#F9F9F7]">
-          <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
-            <div className="space-y-0.5">
-              <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#CC0000]">
-                ACTIVE GROUP DIRECTORY
-              </span>
-              <h3 className="font-serif text-xl font-bold text-[#111111]">
-                {family?.name || "Family Group"}
-              </h3>
-            </div>
-            <Badge variant="default">
-              {members.length} VERIFIED MEMBERS
-            </Badge>
+        {/* Directory View */}
+        {!isConnected ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Users className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No Stellar Wallet Connected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              Connect your Stellar Testnet wallet to load your registered family vaults and manage verified beneficiary authorizations.
+            </p>
+            <Button variant="default" onClick={() => connect()}>
+              Connect Stellar Wallet
+            </Button>
           </div>
+        ) : !family ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Users className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No On-Chain Family Vault Selected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              {userFamilies.length > 0
+                ? "Select one of your registered family vaults from the selector or register a new family group."
+                : "No family records registered yet on Stellar Testnet for your account. Register your first family group to authorize members and automate remittances."}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              {userFamilies.length > 0 && (
+                <select
+                  value={selectedFamilyId}
+                  onChange={(e) => selectFamily(Number(e.target.value))}
+                  className="border-2 border-[#111111] bg-white px-3 py-1.5 text-xs font-mono font-bold"
+                >
+                  <option value={0}>Choose a Family Vault...</option>
+                  {userFamilies.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      #{f.id} · {f.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <Button variant="default" onClick={() => setCreateFamilyOpen(true)}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Register New Family Vault
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* Directory Broadsheet Table */
+          <div className="border-2 border-[#111111] bg-[#F9F9F7]">
+            <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5] flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-[#CC0000]">
+                  ACTIVE GROUP DIRECTORY
+                </span>
+                <h3 className="font-serif text-xl font-bold text-[#111111]">
+                  {family.name}
+                </h3>
+              </div>
+              <Badge variant="default">
+                {members.length} VERIFIED MEMBERS
+              </Badge>
+            </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Member Name / Purpose</TableHead>
-                <TableHead>Stellar Public Key</TableHead>
-                <TableHead>Role Authority</TableHead>
-                <TableHead>Registration Date</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((member) => (
-                <TableRow key={member.address}>
-                  <TableCell className="font-serif font-bold text-sm text-[#111111]">
-                    {member.name}
-                    {member.address === family?.owner && (
-                      <span className="ml-2 font-mono text-[9px] bg-[#111111] text-[#F9F9F7] px-1.5 py-0.5 uppercase tracking-wider font-bold">
-                        CREATOR
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <AddressPill address={member.address} />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.role === "Sender" ? "default" : member.role === "CoAdmin" ? "secondary" : "outline"}>
-                      {member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-[#737373]">
-                    {formatTimestamp(member.joinedAt)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {member.address !== family?.owner && (
-                      <button
-                        onClick={() => handleRemoveMember(member.address)}
-                        className="p-1 text-[#737373] hover:text-[#CC0000] transition-colors"
-                        title="Remove member"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member Name / Purpose</TableHead>
+                  <TableHead>Stellar Public Key</TableHead>
+                  <TableHead>Role Authority</TableHead>
+                  <TableHead>Registration Date</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {members.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-xs font-mono text-[#737373]">
+                      No beneficiary members registered in this family group yet. Click &quot;Add Member&quot; to authorize an on-chain recipient.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  members.map((member) => (
+                    <TableRow key={member.address}>
+                      <TableCell className="font-serif font-bold text-sm text-[#111111]">
+                        {member.name}
+                        {member.address === family?.owner && (
+                          <span className="ml-2 font-mono text-[9px] bg-[#111111] text-[#F9F9F7] px-1.5 py-0.5 uppercase tracking-wider font-bold">
+                            CREATOR
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <AddressPill address={member.address} />
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={member.role === "Sender" ? "default" : member.role === "CoAdmin" ? "secondary" : "outline"}>
+                          {member.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-[#737373]">
+                        {formatTimestamp(member.joinedAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {member.address !== family?.owner && (
+                          <button
+                            onClick={() => handleRemoveMember(member.address)}
+                            className="p-1 text-[#737373] hover:text-[#CC0000] transition-colors"
+                            title="Remove member"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
         {/* 3-Column RBAC Authority Matrix (Newspaper Column Style) */}
         <div className="border-2 border-[#111111] bg-[#F9F9F7]">

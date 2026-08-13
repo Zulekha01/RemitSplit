@@ -22,7 +22,7 @@ interface WalletStore {
   error: string | null;
   kit: any | null;
   connect: (customAddress?: string) => Promise<void>;
-  disconnect: () => void;
+  disconnect: () => void | Promise<void>;
   refreshBalance: () => Promise<void>;
   signTransaction: (xdrString: string) => Promise<string>;
   getSignerOptions: () => {
@@ -53,6 +53,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           isConnecting: false,
         });
         await get().refreshBalance();
+        const { useFamilyStore } = await import("@/state/use-family-store");
+        const families = useFamilyStore.getState().families;
+        const myFamily = families.find(
+          (f) => f.owner === customAddress || f.members?.some((m) => m.address === customAddress)
+        );
+        useFamilyStore.getState().selectFamily(myFamily ? myFamily.id : 0);
         return;
       }
 
@@ -85,6 +91,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
               isConnecting: false,
             });
             await get().refreshBalance();
+            const { useFamilyStore } = await import("@/state/use-family-store");
+            const families = useFamilyStore.getState().families;
+            const myFamily = families.find(
+              (f) => f.owner === address || f.members?.some((m) => m.address === address)
+            );
+            useFamilyStore.getState().selectFamily(myFamily ? myFamily.id : 0);
             logger.info("Wallet", `Connected wallet ${option.name}: ${address}`);
           } catch (err: any) {
             logger.error("Wallet", "Failed to connect wallet", err);
@@ -101,7 +113,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
   },
 
-  disconnect: () => {
+  disconnect: async () => {
     set({
       address: null,
       isConnected: false,
@@ -109,6 +121,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       walletName: null,
       error: null,
     });
+    try {
+      const { useFamilyStore } = await import("@/state/use-family-store");
+      useFamilyStore.getState().selectFamily(0);
+    } catch {
+      // Ignore
+    }
     logger.info("Wallet", "Disconnected");
   },
 

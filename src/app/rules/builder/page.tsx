@@ -34,7 +34,7 @@ interface BuilderItem {
 export default function RuleBuilderPage() {
   const router = useRouter();
   const { families, selectedFamilyId, getSelectedFamily, createRule, activateRule, syncOnChainState } = useFamilyStore();
-  const { address, getSignerOptions } = useWalletStore();
+  const { address, isConnected, connect, getSignerOptions } = useWalletStore();
   const { addTransaction } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
@@ -235,11 +235,40 @@ export default function RuleBuilderPage() {
             Program Split Rule
           </h1>
           <p className="font-body text-xs text-[#525252]">
-            Formulate mathematically enforced remittance distribution parameters for <span className="font-bold text-[#111111]">{family?.name}</span>.
+            Formulate mathematically enforced remittance distribution parameters for <span className="font-bold text-[#111111]">{family?.name || "Family Vault"}</span>.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8 font-mono text-xs">
+        {!isConnected ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No Stellar Wallet Connected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              Connect your Stellar Testnet wallet to configure and deploy programmable remittance split rules.
+            </p>
+            <Button variant="default" onClick={() => connect()}>
+              Connect Stellar Wallet
+            </Button>
+          </div>
+        ) : !family ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Sliders className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No Family Vault Selected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              Please register or select an active family vault before building split rules.
+            </p>
+            <Link href="/families">
+              <Button variant="default">
+                Go to Family Registry
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-8 font-mono text-xs">
           {/* Step 1: Strategy Selection */}
           <div className="border-2 border-[#111111] bg-[#F9F9F7]">
             <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
@@ -440,6 +469,7 @@ export default function RuleBuilderPage() {
             </Button>
           </div>
         </form>
+        )}
       </div>
     </AppShell>
   );

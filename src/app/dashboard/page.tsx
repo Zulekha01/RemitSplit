@@ -88,24 +88,42 @@ export default function DashboardPage() {
         </div>
 
         {/* Wallet Alert if disconnected */}
-        {!isConnected && (
-          <div className="border-2 border-[#111111] bg-[#F5F5F5] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs">
+        {!isConnected ? (
+          <div className="border-2 border-dashed border-[#111111] bg-[#F5F5F5] p-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
             <div className="flex items-center space-x-3">
               <span className="text-[#CC0000] font-black text-base">●</span>
               <div>
-                <span className="font-bold text-[#111111] uppercase tracking-wider block">
-                  WALLET NOT CONNECTED:
+                <span className="font-bold text-[#111111] uppercase tracking-wider block text-sm">
+                  WALLET NOT CONNECTED
                 </span>
                 <span className="text-[#525252]">
-                  Connect your Stellar wallet to authorize and sign live on-chain remittance dispatches.
+                  Connect your Stellar wallet to view your personal family vault, manage rules, and sign live on-chain remittance dispatches.
                 </span>
               </div>
             </div>
             <Button onClick={() => connect()} size="sm" variant="default">
-              Connect Wallet
+              Connect Stellar Wallet
             </Button>
           </div>
-        )}
+        ) : !family ? (
+          <div className="border-2 border-dashed border-[#111111] p-12 text-center space-y-4 bg-[#F9F9F7]">
+            <Users className="h-10 w-10 mx-auto text-[#737373]" />
+            <h3 className="font-serif text-xl font-bold text-[#111111]">
+              No Family Vault Selected
+            </h3>
+            <p className="font-body text-xs text-[#525252] max-w-md mx-auto">
+              You do not have a family vault selected. Choose an authorized vault from the sidebar or register a new family group on Stellar Testnet to begin automating remittances.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Link href="/families">
+                <Button variant="default">
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Register Family Vault
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         {/* Primary 4-Column Stat Grid with Collapsed Borders */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-2 border-[#111111] divide-y sm:divide-y-0 sm:divide-x divide-[#111111] bg-[#F9F9F7]">

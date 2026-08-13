@@ -36,10 +36,14 @@ export default function DepositPage() {
   const { addTransaction, updateStatus } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
+  const userFamilies = address
+    ? families.filter((f) => f.owner === address || f.members?.some((m) => m.address === address))
+    : [];
+
   const family = getSelectedFamily();
   const activeRule = family?.activeRule;
 
-  const [amountStr, setAmountStr] = useState("1000");
+  const [amountStr, setAmountStr] = useState("");
   const [step, setStep] = useState<FlowStep>("INPUT");
   const [txHash, setTxHash] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -212,7 +216,14 @@ export default function DepositPage() {
                   onChange={(e) => selectFamily(Number(e.target.value))}
                   className="w-full text-xs font-mono border-2 border-[#111111] bg-[#F9F9F7] px-3 py-2.5 text-[#111111] focus:outline-none"
                 >
-                  {families.map((f) => (
+                  <option value={0}>
+                    {!isConnected
+                      ? "— Connect Wallet First —"
+                      : userFamilies.length === 0
+                      ? "— No Registered Vaults Found —"
+                      : "— Select Target Family Vault —"}
+                  </option>
+                  {userFamilies.map((f) => (
                     <option key={f.id} value={f.id}>
                       #{f.id} · {f.name} (Active Rule: v{f.activeRuleVersion || "None"})
                     </option>

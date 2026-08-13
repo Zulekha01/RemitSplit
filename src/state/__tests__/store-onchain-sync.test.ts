@@ -29,4 +29,21 @@ describe("On-Chain Stores Initial State & Zero-Mock Guarantee", () => {
     const activityState = useActivityStore.getState();
     expect(activityState.events).toEqual([]);
   });
+
+  it("getSelectedFamily returns undefined when selectedFamilyId is 0 even if families array contains items", () => {
+    useFamilyStore.setState({
+      families: [
+        {
+          id: 1,
+          name: "Aalmi Global Family",
+          owner: "GBDKL7REO324GNLVUDEKYPYHFLVE5EV7GQWSKN66AL6K5YLLIPMJD4XG",
+          createdAt: Date.now(),
+          members: [],
+        },
+      ],
+      selectedFamilyId: 0,
+    });
+
+    expect(useFamilyStore.getState().getSelectedFamily()).toBeUndefined();
+  });
 });
