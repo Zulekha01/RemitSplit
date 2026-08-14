@@ -35,24 +35,30 @@ class ObservabilityLogger {
 
   debug(context: string, message: string, data?: unknown) {
     const entry = this.format("debug", context, message, data);
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test" && !process.env.VITEST) {
       console.debug(`[${entry.timestamp}] [DEBUG] [${context}] ${message}`, data || "");
     }
   }
 
   info(context: string, message: string, data?: unknown) {
     const entry = this.format("info", context, message, data);
-    console.info(`[${entry.timestamp}] [INFO] [${context}] ${message}`, data || "");
+    if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+      console.info(`[${entry.timestamp}] [INFO] [${context}] ${message}`, data || "");
+    }
   }
 
   warn(context: string, message: string, data?: unknown) {
     const entry = this.format("warn", context, message, data);
-    console.warn(`[${entry.timestamp}] [WARN] [${context}] ${message}`, data || "");
+    if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+      console.warn(`[${entry.timestamp}] [WARN] [${context}] ${message}`, data || "");
+    }
   }
 
   error(context: string, message: string, error?: unknown) {
     const entry = this.format("error", context, message, error);
-    console.error(`[${entry.timestamp}] [ERROR] [${context}] ${message}`, error || "");
+    if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+      console.error(`[${entry.timestamp}] [ERROR] [${context}] ${message}`, error || "");
+    }
   }
 
   getLogs(): LogEntry[] {

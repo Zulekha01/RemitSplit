@@ -225,14 +225,24 @@ export const useWalletStore = create<WalletStore>()(
     const { address } = get();
     if (!address) return;
 
+    // Skip live Horizon calls in test environments
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+      return;
+    }
+
     try {
       const server = new Horizon.Server("https://horizon-testnet.stellar.org");
       const account = await server.loadAccount(address);
       const nativeBalance = account.balances.find((b) => b.asset_type === "native");
       const balance = nativeBalance ? nativeBalance.balance : "0";
       set({ balance });
-    } catch (err) {
-      logger.debug("Wallet", "Could not fetch balance from Horizon", err);
+    } catch (err: any) {
+      // 404 indicates an unfunded or brand-new testnet account, which defaults to 0 balance
+      if (err?.name === "NotFoundError" || err?.response?.status === 404) {
+        set({ balance: "0" });
+        return;
+      }
+      logger.debug("Wallet", "Could not fetch balance from Horizon", err?.message || err);
     }
   },
 
