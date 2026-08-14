@@ -27,7 +27,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Soroban Contract Unit Tests
-        run: cargo test --workspace --verbose
+        run: cargo test --workspace
 
   frontend-vitest-tests:
     name: Frontend — vitest unit & integration tests
