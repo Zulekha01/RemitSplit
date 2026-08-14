@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="https://remitsplit.vercel.app"><img src="https://img.shields.io/badge/Live_Dapp-remitsplit.vercel.app-blueviolet?logo=vercel" alt="Live Dapp"/></a>
   <a href="https://stellar.expert/explorer/testnet/contract/CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D"><img src="https://img.shields.io/badge/FamilyRegistry-Testnet-blue?logo=stellar" alt="FamilyRegistry"/></a>
   <a href="https://stellar.expert/explorer/testnet/contract/CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5"><img src="https://img.shields.io/badge/EscrowDistribution-Testnet-blue?logo=stellar" alt="EscrowDistribution"/></a>
   <a href="https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"><img src="https://img.shields.io/badge/NativeSAC-Testnet-blue?logo=stellar" alt="NativeSAC"/></a>
@@ -43,8 +44,6 @@
   - [9.4 CI/CD](#94-cicd)
 - [10. Contract Addresses & On-Chain Verification](#10-contract-addresses--on-chain-verification)
 - [11. Resources & Links](#11-resources--links)
-- [12. Feedback & Responses](#12-feedback--responses)
-- [13. Active Usage Proof](#13-active-usage-proof)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -393,46 +392,61 @@ export STELLAR_ACCOUNT=remitsplit_deployer
 
 ## 9. Screenshots
 
-### 9.1 Desktop
+### 9.1 Desktop Interface
 
-| Dashboard & Gazette Overview | Deposit & Atomic Split |
-|---|---|
-| ![Dashboard](public/logo.png) | ![Deposit](public/logo.png) |
+| Landing Hero Broadsheet | Deterministic Split Strategies |
+|:---:|:---:|
+| ![Landing Hero Broadsheet](screenshots/desktop-1.png) | ![Deterministic Split Strategies](screenshots/desktop-2.png) |
 
-| Rule Version Archive | Split Rule Builder |
-|---|---|
-| ![Rules](public/logo.png) | ![Builder](public/logo.png) |
+| Protocol Dispatch & Action | Family Roster & Member Directory |
+|:---:|:---:|
+| ![Protocol Dispatch](screenshots/desktop-3.png) | ![Family Directory](screenshots/desktop-4.png) |
 
-### 9.2 Mobile
+| On-Chain RBAC Governance | Family Hub & Overview Gazette |
+|:---:|:---:|
+| ![RBAC Governance](screenshots/desktop-5.png) | ![Family Hub Overview](screenshots/desktop-6.png) |
 
-| Mobile Navigation | Mobile Settlement Feed |
-|---|---|
-| ![Mobile Nav](public/logo.png) | ![Mobile Feed](public/logo.png) |
+| Telemetry & Financial Reports | Rule Version Archive |
+|:---:|:---:|
+| ![Telemetry Reports](screenshots/desktop-7.png) | ![Rule Version Archive](screenshots/desktop-8.png) |
 
-### 9.3 Test
+| Deposit & Atomic Split Workflow | Register Family Record Modal |
+|:---:|:---:|
+| ![Deposit & Split](screenshots/desktop-9.png) | ![Register Family Modal](screenshots/desktop-10.png) |
 
-```text
-running 12 tests
-test test::test_percentage_deposit_and_distribution ... ok
-test test::test_fixed_amount_distribution ... ok
-test test::test_waterfall_allocation_scenarios ... ok
-test test::test_retry_distribution_safety ... ok
-test test::test_create_family ... ok
-test test::test_rbac_restrictions ... ok
-test test::test_add_and_remove_members ... ok
-test test::test_create_and_activate_percentage_rule ... ok
+### 9.2 Mobile Responsive Views
 
-test result: ok. 12 passed; 0 failed; 0 ignored
-```
+| Mobile Hero & Telemetry | Mobile Split Strategies |
+|:---:|:---:|
+| ![Mobile Hero](screenshots/mobile-1.png) | ![Mobile Strategies](screenshots/mobile-2.png) |
 
-### 9.4 CI/CD
+| Mobile Action Dispatch | Mobile Family Directory |
+|:---:|:---:|
+| ![Mobile Dispatch](screenshots/mobile-3.png) | ![Mobile Directory](screenshots/mobile-4.png) |
 
-```text
-✓ Cargo test (12/12 passed)
-✓ TypeScript typecheck (0 errors)
-✓ Vitest frontend suite (19/19 passed)
-✓ Next.js build (15 static routes generated)
-```
+| Mobile RBAC Matrix | Mobile Overview Dashboard |
+|:---:|:---:|
+| ![Mobile RBAC](screenshots/mobile-5.png) | ![Mobile Dashboard](screenshots/mobile-6.png) |
+
+| Mobile Telemetry & Metrics | Mobile Rule Archive |
+|:---:|:---:|
+| ![Mobile Telemetry](screenshots/mobile-7.png) | ![Mobile Rule Archive](screenshots/mobile-8.png) |
+
+| Mobile Deposit & Split | Mobile Register Modal |
+|:---:|:---:|
+| ![Mobile Deposit](screenshots/mobile-9.png) | ![Mobile Register Modal](screenshots/mobile-10.png) |
+
+### 9.3 Test Execution Verification
+
+| Rust Soroban Contract Tests (12/12 Passed) | Frontend Vitest Test Suite (20/20 Passed) |
+|:---:|:---:|
+| ![Rust Cargo Tests](screenshots/cargo-test.png) | ![Vitest Suite](screenshots/vitest.png) |
+
+### 9.4 CI/CD Verification
+
+| GitHub Actions Automated PR/Push Checks & Vercel Deployment (All 6 Passing) |
+|:---:|
+| ![All Checks Passed](screenshots/ci-cd.png) |
 
 ---
 
@@ -450,34 +464,9 @@ test result: ok. 12 passed; 0 failed; 0 ignored
 
 ## 11. Resources & Links
 
+- **Interactive Dapp**: [https://remitsplit.vercel.app](https://remitsplit.vercel.app)
 - **Video Walkthrough**: `[Link to Video Demo Placeholder]`
-- **Interactive Dapp**: `[Link to Hosted Production Dapp Placeholder]`
-- **Official Documentation**: `[Link to Protocol Documentation Placeholder]`
 - **Stellar Developer Portal**: [developers.stellar.org](https://developers.stellar.org)
-
----
-
-## 12. Feedback & Responses
-
-- **Community Feedback Form**: `[Link to Feedback Form Placeholder]`
-- **Technical Inquiries & Issues**: Open an issue on GitHub or submit a diagnostic log from the `/settings` dashboard.
-
----
-
-## 13. Active Usage Proof
-
-Verifiable Stellar Testnet transactions executed on-chain:
-
-| Operation | Transaction Hash | Ledger | Status |
-|---|---|---|---|
-| **Registry Init** | [`e057aa35bbac22ad...`](https://stellar.expert/explorer/testnet/tx/e057aa35bbac22ad923c8aae2ac4ed9eeff15f1bb244ecd7229d0a80805192b6) | 4435288 | Confirmed |
-| **Escrow Init** | [`c83d57885eb75ad5...`](https://stellar.expert/explorer/testnet/tx/c83d57885eb75ad551aae809c701ca9d915cf7c74526a21df939428dd066a7b8) | 4435290 | Confirmed |
-| **Create Family (Aalmi Group)** | [`38a736f3ea798957...`](https://stellar.expert/explorer/testnet/tx/38a736f3ea7989575cd45cca403ad5420448ed25a7e5f7abf9223c441ef2c5ae) | 4435307 | Confirmed |
-| **Add Member (Sister Co-Admin)** | [`3a1ccf30f2945ad7...`](https://stellar.expert/explorer/testnet/tx/3a1ccf30f2945ad72b3fb09ae31ab15da640b7d0f4c32a93ab604befd5e541fd) | 4435309 | Confirmed |
-| **Add Member (Mother Recipient)** | [`745e118c1a26c30f...`](https://stellar.expert/explorer/testnet/tx/745e118c1a26c30f41c3444bdf2df555894201eb57fdfec23497029fb331aefa) | 4435312 | Confirmed |
-| **Create Split Rule v1 (50/50)** | [`2c6cae3683d85434...`](https://stellar.expert/explorer/testnet/tx/2c6cae3683d854340696483ad4225f8cdf07352e1505717287780a423e496b73) | 4435315 | Confirmed |
-| **Activate Rule Version 1** | [`67c72501e9a135a7...`](https://stellar.expert/explorer/testnet/tx/67c72501e9a135a7563a6b3db2de4c7ab5c2bc9e6754fc4bb204d63e1c5bedcb) | 4435318 | Confirmed |
-| **Deposit & Atomic Split** | [`7fe7159c3f618393...`](https://stellar.expert/explorer/testnet/tx/7fe7159c3f618393fca6f76970410f20b195245504a3c7a8f07f2d7c081691ca) | 4435322 | Confirmed |
 
 ---
 
