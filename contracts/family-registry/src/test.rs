@@ -39,6 +39,43 @@ fn test_create_family() {
 }
 
 #[test]
+fn test_designated_sender_can_deposit_but_other_roles_cannot() {
+    let (env, _, client) = setup_test();
+    let owner = Address::generate(&env);
+    let family_id = client.create_family(&owner, &String::from_str(&env, "Family"));
+    let sender = Address::generate(&env);
+    let co_admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+
+    client.add_member(
+        &owner,
+        &family_id,
+        &sender,
+        &Role::Sender,
+        &String::from_str(&env, "Additional Sender"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &co_admin,
+        &Role::CoAdmin,
+        &String::from_str(&env, "CoAdmin"),
+    );
+    client.add_member(
+        &owner,
+        &family_id,
+        &recipient,
+        &Role::Recipient,
+        &String::from_str(&env, "Recipient"),
+    );
+
+    assert!(client.validate_family_sender(&family_id, &owner));
+    assert!(client.validate_family_sender(&family_id, &sender));
+    assert!(!client.validate_family_sender(&family_id, &co_admin));
+    assert!(!client.validate_family_sender(&family_id, &recipient));
+}
+
+#[test]
 fn test_add_and_remove_members() {
     let (env, _, client) = setup_test();
     let owner = Address::generate(&env);

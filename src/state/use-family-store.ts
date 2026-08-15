@@ -81,8 +81,13 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
         const loadedFamilies: Family[] = [];
         const loadedRules: Record<number, AllocationRule[]> = {};
 
+        // New registry versions expose a count, avoiding an arbitrary scan
+        // ceiling. The bounded fallback keeps the UI usable with the currently
+        // deployed contract until it is upgraded.
+        const reportedFamilyCount = await registryContractService.fetchFamilyCount();
+        const familyLimit = reportedFamilyCount > 0 ? reportedFamilyCount : 50;
         let currentId = 1;
-        while (currentId <= 50) {
+        while (currentId <= familyLimit) {
           try {
             const fam = await registryContractService.fetchFamily(currentId);
             if (!fam) break;
@@ -90,7 +95,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
             const [members, activeRule, allRules] = await Promise.all([
               registryContractService.fetchMembers(currentId),
               registryContractService.fetchActiveRule(currentId),
-              registryContractService.fetchAllRules(currentId, fam.activeRuleVersion || 1),
+              registryContractService.fetchAllRules(currentId),
             ]);
 
             const fullFamily: Family = {
@@ -134,12 +139,17 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       throw new Error("Wallet not connected: owner address required to create family");
     }
 
+    const knownCount = await registryContractService.fetchFamilyCount();
     const res = await registryContractService.executeCreateFamily(owner, name, options);
     await get().syncOnChainState();
 
     const currentFamilies = get().families;
-    const created = currentFamilies.find((f) => f.name === name) || currentFamilies[currentFamilies.length - 1];
-    const newId = created?.id || 1;
+    const created = currentFamilies.find((f) => f.id === knownCount + 1)
+      || [...currentFamilies].reverse().find((f) => f.owner === owner && f.name === name);
+    if (!created) {
+      throw new Error("Family transaction succeeded but its on-chain record could not be loaded. Refresh and try again.");
+    }
+    const newId = created.id;
 
     set({ selectedFamilyId: newId });
     logger.info("FamilyStore", `Created family ${name} on-chain with id ${newId}`);

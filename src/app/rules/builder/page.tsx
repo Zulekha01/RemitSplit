@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -39,11 +39,25 @@ export default function RuleBuilderPage() {
   const { addEvent } = useActivityStore();
 
   const family = getSelectedFamily();
-  const members = family?.members || [];
-  const recipientMembers = members.filter((m) => m.role === "Recipient");
+  const members = useMemo(() => family?.members ?? [], [family?.members]);
+  const recipientMembers = useMemo(
+    () => members.filter((member) => member.role === "Recipient"),
+    [members]
+  );
+  const currentMember = members.find((member) => member.address === address);
+  const canCreateRule = currentMember?.role === "Sender" || currentMember?.role === "CoAdmin";
+  const canActivateRule = currentMember?.role === "Sender";
 
   const [strategy, setStrategy] = useState<AllocationStrategy>("Percentage");
   const [items, setItems] = useState<BuilderItem[]>([]);
+
+  // A family can be selected after the app-wide bootstrap has completed.
+  // Refresh its full roster before deriving allocation rows from recipients.
+  React.useEffect(() => {
+    if (selectedFamilyId > 0) {
+      syncOnChainState(selectedFamilyId);
+    }
+  }, [selectedFamilyId, syncOnChainState]);
 
   // Initialize items dynamically from on-chain recipient members
   React.useEffect(() => {
@@ -74,6 +88,14 @@ export default function RuleBuilderPage() {
   const [autoActivate, setAutoActivate] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // CoAdmins can create a rule but only a Sender can activate one. Prevent a
+  // successful create from being followed by a guaranteed failing transaction.
+  React.useEffect(() => {
+    if (!canActivateRule) {
+      setAutoActivate(false);
+    }
+  }, [canActivateRule]);
 
   // Validation
   let isValid = true;
@@ -141,10 +163,24 @@ export default function RuleBuilderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || !family) return;
 
     if (!address) {
       setErrorMsg("Please connect your Stellar wallet first.");
+      return;
+    }
+
+    if (!family) {
+      setErrorMsg("Select a family vault before creating a rule.");
+      return;
+    }
+
+    if (!canCreateRule) {
+      setErrorMsg("Only a registered Sender or CoAdmin can create a rule for this family.");
+      return;
+    }
+
+    if (!isValid) {
+      setErrorMsg(validationMessage || "Complete the allocation details before creating the rule.");
       return;
     }
 
@@ -212,6 +248,9 @@ export default function RuleBuilderPage() {
         useActivityStore.getState().syncOnChainEvents(),
         useTransactionStore.getState().syncOnChainTransactions(),
       ]);
+      if (!autoActivate) {
+        setErrorMsg("Rule version created on-chain. A registered Sender must activate it before dispatches can use it.");
+      }
       router.push("/rules");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to deploy rule on-chain");
@@ -273,6 +312,16 @@ export default function RuleBuilderPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-8 font-mono text-xs">
+          {errorMsg && (
+            <div className="border-2 border-[#CC0000] p-3 text-[#CC0000] font-bold bg-[#F9F9F7]">
+              {errorMsg}
+            </div>
+          )}
+          {!canCreateRule && (
+            <div className="border-2 border-[#CC0000] p-3 text-[#CC0000] font-bold bg-[#F9F9F7]">
+              Only a registered Sender or CoAdmin can create rules for this family vault.
+            </div>
+          )}
           {/* Step 1: Strategy Selection */}
           <div className="border-2 border-[#111111] bg-[#F9F9F7]">
             <div className="p-4 border-b-2 border-[#111111] bg-[#F5F5F5]">
@@ -353,6 +402,11 @@ export default function RuleBuilderPage() {
             </div>
 
             <div className="p-6 space-y-4">
+              {recipientMembers.length === 0 && (
+                <div className="border-2 border-[#CC0000] p-3 text-[#CC0000] font-bold bg-[#F9F9F7]">
+                  Add at least one Recipient in the Family Directory before creating a split rule.
+                </div>
+              )}
               {items.map((item, index) => (
                 <div
                   key={index}
@@ -454,10 +508,13 @@ export default function RuleBuilderPage() {
                 type="checkbox"
                 checked={autoActivate}
                 onChange={(e) => setAutoActivate(e.target.checked)}
+                disabled={!canActivateRule}
                 className="h-4 w-4 rounded-none border-2 border-[#111111] text-[#111111] focus:ring-0"
               />
               <span className="font-bold uppercase tracking-wider text-[#111111]">
-                Immediately activate this rule version upon ledger confirmation
+                {canActivateRule
+                  ? "Immediately activate this rule version upon ledger confirmation"
+                  : "Only a Sender can activate this rule after creation"}
               </span>
             </label>
 
@@ -465,7 +522,7 @@ export default function RuleBuilderPage() {
               type="submit"
               size="lg"
               variant="default"
-              disabled={!isValid || isSubmitting}
+              disabled={isSubmitting}
               className="w-full sm:w-auto px-10 shadow-[4px_4px_0px_0px_#111111]"
             >
               {isSubmitting ? "Deploying On-Chain..." : "Deploy Rule Version"}

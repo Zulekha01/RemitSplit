@@ -8,7 +8,7 @@ import { Role, AllocationStrategy, AllocationItem, Family, Member, AllocationRul
 import { stellarRpcService, SubmitTxResult } from "./stellar-rpc";
 
 const REGISTRY_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D";
+  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V";
 
 export interface TxSignerOptions {
   signTransaction?: (xdrBase64: string) => Promise<string>;
@@ -27,7 +27,7 @@ export class RegistryContractService {
   }
 
   getContractId(): string {
-    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D";
+    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V";
   }
 
   /**
@@ -326,7 +326,10 @@ export class RegistryContractService {
 
   async fetchAllRules(familyId: number, maxVersion?: number): Promise<AllocationRule[]> {
     const rules: AllocationRule[] = [];
-    const limit = maxVersion !== undefined && maxVersion > 0 ? maxVersion : 5;
+    const reportedCount = maxVersion !== undefined ? maxVersion : await this.fetchRuleCount(familyId);
+    // The deployed predecessor does not expose get_rule_count. Retain a
+    // bounded compatibility scan until the upgraded registry is live.
+    const limit = reportedCount > 0 ? reportedCount : 50;
     for (let version = 1; version <= limit; version++) {
       try {
         const rule = await this.fetchRule(familyId, version);
@@ -337,6 +340,30 @@ export class RegistryContractService {
       }
     }
     return rules;
+  }
+
+  async fetchFamilyCount(): Promise<number> {
+    const raw = await stellarRpcService.callReadMethod(this.getContractId(), "get_family_count");
+    return raw === null || raw === undefined ? 0 : Number(raw);
+  }
+
+  async fetchRuleCount(familyId: number): Promise<number> {
+    const raw = await stellarRpcService.callReadMethod(
+      this.getContractId(),
+      "get_rule_count",
+      nativeToScVal(familyId, { type: "u32" })
+    );
+    return raw === null || raw === undefined ? 0 : Number(raw);
+  }
+
+  async validateFamilySender(familyId: number, sender: string): Promise<boolean> {
+    const raw = await stellarRpcService.callReadMethod(
+      this.getContractId(),
+      "validate_family_sender",
+      nativeToScVal(familyId, { type: "u32" }),
+      nativeToScVal(new Address(sender), { type: "address" })
+    );
+    return raw === true;
   }
 }
 

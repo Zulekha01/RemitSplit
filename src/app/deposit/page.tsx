@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Send,
@@ -27,6 +27,7 @@ import { ExplorerLink } from "@/components/shared/explorer-link";
 import { xlmToStroops, stroopsToXlm, bpsToPercentage } from "@/lib/formatters";
 
 import { distributionContractService } from "@/services/distribution-contract";
+import { registryContractService } from "@/services/registry-contract";
 
 type FlowStep = "INPUT" | "PREVIEW" | "SIGNING" | "PROCESSING" | "CONFIRMED" | "FAILED";
 
@@ -36,12 +37,18 @@ export default function DepositPage() {
   const { addTransaction, updateStatus } = useTransactionStore();
   const { addEvent } = useActivityStore();
 
-  const userFamilies = address
-    ? families.filter((f) => f.owner === address || f.members?.some((m) => m.address === address))
-    : [];
+  const senderFamilies = useMemo(
+    () => address
+      ? families.filter((f) => f.members?.some((m) => m.address === address && m.role === "Sender"))
+      : [],
+    [address, families]
+  );
 
   const family = getSelectedFamily();
-  const activeRule = family?.activeRule;
+  const canDispatch = Boolean(
+    address && family?.members?.some((member) => member.address === address && member.role === "Sender")
+  );
+  const activeRule = canDispatch ? family?.activeRule : undefined;
 
   const [amountStr, setAmountStr] = useState("");
   const [step, setStep] = useState<FlowStep>("INPUT");
@@ -69,7 +76,17 @@ export default function DepositPage() {
     };
   });
 
-  const handleStartDeposit = () => {
+  React.useEffect(() => {
+    if (selectedFamilyId > 0 && !senderFamilies.some((candidate) => candidate.id === selectedFamilyId)) {
+      selectFamily(senderFamilies[0]?.id || 0);
+    }
+  }, [selectedFamilyId, senderFamilies, selectFamily]);
+
+  const handleStartDeposit = async () => {
+    if (!family || !address || !canDispatch) {
+      setErrorMsg("Only a registered Sender can dispatch funds. Ask the family owner to add this wallet with the Sender role, then select that family vault.");
+      return;
+    }
     if (!activeRule) {
       setErrorMsg("This family has no active split rule. Please activate a rule first.");
       return;
@@ -78,12 +95,24 @@ export default function DepositPage() {
       setErrorMsg("Please enter a valid deposit amount greater than 0 XLM.");
       return;
     }
-    setErrorMsg("");
-    setStep("PREVIEW");
+    setIsSimulating(true);
+    try {
+      const senderIsAuthorized = await registryContractService.validateFamilySender(family.id, address);
+      if (!senderIsAuthorized) {
+        setErrorMsg("This wallet is not an authorized Sender for the selected family on-chain. Refresh the family record or ask the owner to grant Sender access.");
+        return;
+      }
+      setErrorMsg("");
+      setStep("PREVIEW");
+    } catch {
+      setErrorMsg("Could not verify Sender authorization against Stellar. Check your network connection and try again.");
+    } finally {
+      setIsSimulating(false);
+    }
   };
 
   const handleConfirmAndSign = async () => {
-    if (!family || !activeRule) return;
+    if (!family || !activeRule || !canDispatch) return;
 
     if (!address) {
       setErrorMsg("Please connect your Stellar wallet first.");
@@ -200,11 +229,11 @@ export default function DepositPage() {
                   <option value={0}>
                     {!isConnected
                       ? "— Connect Wallet First —"
-                      : userFamilies.length === 0
+                      : senderFamilies.length === 0
                       ? "— No Registered Vaults Found —"
                       : "— Select Target Family Vault —"}
                   </option>
-                  {userFamilies.map((f) => (
+                  {senderFamilies.map((f) => (
                     <option key={f.id} value={f.id}>
                       #{f.id} · {f.name} (Active Rule: v{f.activeRuleVersion || "None"})
                     </option>
@@ -286,7 +315,7 @@ export default function DepositPage() {
                   size="lg"
                   variant="default"
                   onClick={handleStartDeposit}
-                  disabled={!activeRule || amountNumber <= 0}
+                  disabled={!activeRule || amountNumber <= 0 || isSimulating}
                   className="px-8 shadow-[4px_4px_0px_0px_#111111]"
                 >
                   Review Dispatch Calculations
