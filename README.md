@@ -9,8 +9,8 @@
 
 <p align="center">
   <a href="https://remitsplit.vercel.app"><img src="https://img.shields.io/badge/Live_Dapp-remitsplit.vercel.app-blueviolet?logo=vercel" alt="Live Dapp"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D"><img src="https://img.shields.io/badge/FamilyRegistry-Testnet-blue?logo=stellar" alt="FamilyRegistry"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5"><img src="https://img.shields.io/badge/EscrowDistribution-Testnet-blue?logo=stellar" alt="EscrowDistribution"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V"><img src="https://img.shields.io/badge/FamilyRegistry-Testnet-blue?logo=stellar" alt="FamilyRegistry"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM"><img src="https://img.shields.io/badge/EscrowDistribution-Testnet-blue?logo=stellar" alt="EscrowDistribution"/></a>
   <a href="https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"><img src="https://img.shields.io/badge/NativeSAC-Testnet-blue?logo=stellar" alt="NativeSAC"/></a>
   <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build"/>
@@ -169,7 +169,7 @@ sequenceDiagram
 
 **Purpose**: Master directory for family vaults, role assignments (RBAC), and programmable rule version archives.
 
-**Address**: [`CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D`](https://stellar.expert/explorer/testnet/contract/CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D)
+**Address**: [`CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V`](https://stellar.expert/explorer/testnet/contract/CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V)
 
 #### Storage Model
 
@@ -204,7 +204,7 @@ sequenceDiagram
 
 **Purpose**: Non-custodial escrow deposit holding, cross-contract rule resolution, deterministic payout calculation, and multi-recipient SAC settlement transfers.
 
-**Address**: [`CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5`](https://stellar.expert/explorer/testnet/contract/CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5)
+**Address**: [`CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM`](https://stellar.expert/explorer/testnet/contract/CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM)
 
 #### Storage Model
 
@@ -456,8 +456,8 @@ export STELLAR_ACCOUNT=remitsplit_deployer
 
 | Component | Identifier / Address | Explorer Link |
 |---|---|---|
-| **Family Registry Contract** | `CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D` | [View on StellarExpert](https://stellar.expert/explorer/testnet/contract/CAXOUQARANNK6E3FIS2DWYK3QMYKWXJSY2HNPGP4XCIKGGNV5LTESS3D) |
-| **Escrow Distribution Contract** | `CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5` | [View on StellarExpert](https://stellar.expert/explorer/testnet/contract/CAQXR3PGPCVA7U3MZ3WAMZW7IXGFI6QVTYG34QKVHXYNGHE2SQEZLOM5) |
+| **Family Registry Contract** | `CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V` | [View on StellarExpert](https://stellar.expert/explorer/testnet/contract/CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V) |
+| **Escrow Distribution Contract** | `CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM` | [View on StellarExpert](https://stellar.expert/explorer/testnet/contract/CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM) |
 | **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [View on StellarExpert](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 ---

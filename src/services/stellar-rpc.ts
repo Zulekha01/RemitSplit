@@ -27,7 +27,7 @@ export interface SubmitTxOptions {
 export interface SubmitTxResult {
   hash: string;
   ledger?: number;
-  status: "SUCCESS" | "FAILED";
+  status: "SUCCESS" | "PENDING";
 }
 
 export class StellarRpcService {
@@ -165,10 +165,14 @@ export class StellarRpcService {
     logger.info("StellarRpc", `Transaction submitted with hash ${txHash}. Polling for ledger confirmation...`);
 
     const confirmation = await this.pollTransactionDirect(txHash);
+    if (confirmation.status === "FAILED") {
+      throw new Error(confirmation.error || `Transaction ${txHash} failed on-chain`);
+    }
+
     return {
       hash: txHash,
       ledger: confirmation.ledger,
-      status: confirmation.status === "SUCCESS" ? "SUCCESS" : "FAILED",
+      status: confirmation.status === "SUCCESS" ? "SUCCESS" : "PENDING",
     };
   }
 
@@ -179,7 +183,7 @@ export class StellarRpcService {
     hash: string,
     maxWaitMs: number = 30000,
     intervalMs: number = 1000
-  ): Promise<{ status: string; ledger?: number }> {
+  ): Promise<{ status: "SUCCESS" | "FAILED" | "PENDING"; ledger?: number; error?: string }> {
     const start = Date.now();
 
     while (Date.now() - start < maxWaitMs) {
@@ -208,7 +212,12 @@ export class StellarRpcService {
           }
           if (result.status === "FAILED") {
             logger.error("StellarRpc", `Tx ${hash} failed on ledger`);
-            throw new Error(`Transaction ${hash} failed on-chain`);
+            return {
+              status: "FAILED",
+              error: result.errorResultXdr
+                ? `Transaction ${hash} failed on-chain: ${result.errorResultXdr}`
+                : `Transaction ${hash} failed on-chain`,
+            };
           }
         }
       } catch (err) {

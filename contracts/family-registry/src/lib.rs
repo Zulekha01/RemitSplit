@@ -355,11 +355,14 @@ impl FamilyRegistryContract {
 
     /// Validate if an address is the registered Sender/Owner of the family.
     pub fn validate_family_sender(env: Env, family_id: u32, sender: Address) -> bool {
-        if let Some(family) = get_family(&env, family_id) {
-            family.owner == sender
-        } else {
-            false
-        }
+        // The family creator is registered as a Sender when the family is
+        // created. Checking the member record rather than only `Family.owner`
+        // also makes an owner-designated Sender usable for deposits, while
+        // keeping CoAdmins and Recipients unable to move funds.
+        matches!(
+            get_member(&env, family_id, &sender),
+            Some(member) if member.role == Role::Sender
+        )
     }
 
     /// Check if a member has a specific role in a family.
@@ -369,5 +372,17 @@ impl FamilyRegistryContract {
         } else {
             false
         }
+    }
+
+    /// Retrieve the total number of families. This lets dapps enumerate the
+    /// registry without relying on a client-side scan limit.
+    pub fn get_family_count(env: Env) -> u32 {
+        get_family_count(&env)
+    }
+
+    /// Retrieve the latest rule version allocated for a family, including
+    /// inactive historical versions.
+    pub fn get_rule_count(env: Env, family_id: u32) -> u32 {
+        get_rule_count(&env, family_id)
     }
 }
