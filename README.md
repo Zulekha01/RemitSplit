@@ -465,7 +465,7 @@ export STELLAR_ACCOUNT=remitsplit_deployer
 ## 11. Resources & Links
 
 - **Interactive Dapp**: [https://remitsplit.vercel.app](https://remitsplit.vercel.app)
-- **Video Walkthrough**: `[Link to Video Demo Placeholder]`
+- **Video Walkthrough**: [Watch the RemitSplit demo](https://drive.google.com/file/d/1enFMhMzaEpmq2F7Pxl370JHm-kLvg3ex/view)
 - **Stellar Developer Portal**: [developers.stellar.org](https://developers.stellar.org)
 
 ---
