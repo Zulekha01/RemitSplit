@@ -20,10 +20,10 @@ export default function SettingsPage() {
   const { network } = useWalletStore();
 
   const [registryContractId, setRegistryContractId] = useState(
-    process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V"
+    process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CC7AKOBA47NQ7FR7K27DJWX67CIJCIABDSUTULZ2ODQAUTMECBOI4JLG"
   );
   const [distributionContractId, setDistributionContractId] = useState(
-    process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || "CAQRTZ55VOZPSW5266EQVSAIRKRVZCEC4AIIRQOL3R7MAUNZXIFGS3YM"
+    process.env.NEXT_PUBLIC_ESCROW_DISTRIBUTION_CONTRACT_ID || "CAFYX7GXMT4X7UTG2ZPLJDP4FLIGS25VZDSY7OPXTBOBKFPI77WW3SEW"
   );
   const [rpcUrl, setRpcUrl] = useState(
     process.env.NEXT_PUBLIC_STELLAR_RPC_URL || "https://soroban-testnet.stellar.org"

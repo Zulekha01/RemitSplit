@@ -241,24 +241,55 @@ export class StellarRpcService {
   }
 
   /**
-   * Poll Soroban events from contracts.
+   * Fetch retained contract events, following every page before advancing the
+   * cursor. `limit` controls the RPC page size, not the total events returned.
    */
   async getContractEvents(
     contractIds: string[],
     startLedger?: number,
-    limit: number = 50
+    limit: number = 50,
+    cursor?: string
   ): Promise<rpc.Api.GetEventsResponse> {
     try {
-      return await this.rpcServer.getEvents({
-        filters: [
-          {
-            type: "contract",
-            contractIds: contractIds.filter(Boolean),
-          },
-        ],
-        startLedger,
+      let firstLedger: number | undefined;
+      if (!cursor) {
+        // SDK 13's health type omits ledger bounds returned by newer RPC nodes.
+        const health = await this.rpcServer.getHealth() as rpc.Api.GetHealthResponse & {
+          oldestLedger?: number;
+          latestLedger?: number;
+        };
+        const latestLedger = health.latestLedger ?? (await this.rpcServer.getLatestLedger()).sequence;
+        const oldestLedger = Math.max(1, health.oldestLedger ?? latestLedger - 120);
+        firstLedger = typeof startLedger === "number" && Number.isSafeInteger(startLedger) && startLedger > 0
+          ? Math.max(oldestLedger, Math.min(startLedger, latestLedger))
+          : oldestLedger;
+      }
+
+      const filters: rpc.Api.EventFilter[] = [
+        { type: "contract", contractIds: contractIds.filter(Boolean) },
+      ];
+      let page = await this.rpcServer.getEvents({
+        filters,
+        ...(cursor ? { cursor } : { startLedger: firstLedger }),
         limit,
       });
+      const events = [...page.events];
+      // RPC limits ledger scans as well as event counts: even an empty page can
+      // have more history. Its v1 cursor is a padded TOID plus an event index.
+      // Stop at the initial ledger tip so a busy chain cannot extend this scan
+      // indefinitely. Keep a page-size fallback for alternative cursor formats.
+      const endCursor = `${((BigInt(page.latestLedger) << 32n) | 0xffffffffn)
+        .toString().padStart(19, "0")}-4294967295`;
+      const hasMore = () => /^\d{19}-\d{10}$/.test(page.cursor)
+        ? page.cursor < endCursor
+        : page.events.length === limit;
+      while (page.cursor && page.cursor !== cursor && hasMore()) {
+        cursor = page.cursor;
+        page = await this.rpcServer.getEvents({ filters, cursor, limit });
+        events.push(...page.events);
+      }
+
+      return { ...page, events };
     } catch (err) {
       logger.error("StellarRpc", "Failed to fetch contract events", err);
       throw err;

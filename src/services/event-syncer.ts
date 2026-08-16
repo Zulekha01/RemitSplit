@@ -8,7 +8,8 @@ export class EventSyncerService {
   private subscribers: Set<EventCallback> = new Set();
   private isPolling: boolean = false;
   private timerId: NodeJS.Timeout | null = null;
-  private lastLedger: number | undefined;
+  private cursor: string | undefined;
+  private pollingRun = 0;
 
   subscribe(callback: EventCallback): () => void {
     this.subscribers.add(callback);
@@ -30,11 +31,14 @@ export class EventSyncerService {
   startPolling(contractIds: string[], intervalMs: number = 5000) {
     if (this.isPolling) return;
     this.isPolling = true;
+    const run = ++this.pollingRun;
+    const isCurrentRun = () => this.isPolling && this.pollingRun === run;
 
     const poll = async () => {
+      if (!isCurrentRun()) return;
       // Pause polling if tab is in the background to eliminate lag and CPU waste
       if (typeof document !== "undefined" && document.hidden) {
-        if (this.isPolling) {
+        if (isCurrentRun()) {
           this.timerId = setTimeout(poll, intervalMs);
         }
         return;
@@ -48,12 +52,15 @@ export class EventSyncerService {
         if (validIds.length > 0) {
           const res = await stellarRpcService.getContractEvents(
             validIds,
-            this.lastLedger
+            undefined,
+            50,
+            this.cursor
           );
+          if (!isCurrentRun()) return;
+          // Empty pages also advance the cursor, avoiding repeated history scans.
+          this.cursor = res.cursor;
 
           if (res.events && res.events.length > 0) {
-            this.lastLedger = res.latestLedger;
-
             for (const rawEv of res.events) {
               const decoded = this.decodeSorobanEvent(rawEv);
               if (decoded) {
@@ -63,9 +70,16 @@ export class EventSyncerService {
           }
         }
       } catch (err) {
+        if (!isCurrentRun()) return;
+        // A long-suspended tab may have a cursor outside the retention window.
+        const message = typeof err === "object" && err !== null && "message" in err
+          ? String(err.message) : "";
+        if (/startLedger|oldest ledger|ledger.*range|cursor.*(?:expired|range)/i.test(message)) {
+          this.cursor = undefined;
+        }
         logger.debug("EventSyncer", "Polling cycle completed with note", err);
       } finally {
-        if (this.isPolling) {
+        if (isCurrentRun()) {
           this.timerId = setTimeout(poll, intervalMs);
         }
       }
@@ -76,6 +90,8 @@ export class EventSyncerService {
 
   stopPolling() {
     this.isPolling = false;
+    this.pollingRun++;
+    this.cursor = undefined;
     if (this.timerId) {
       clearTimeout(this.timerId);
       this.timerId = null;

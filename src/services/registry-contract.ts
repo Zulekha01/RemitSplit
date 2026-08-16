@@ -8,7 +8,7 @@ import { Role, AllocationStrategy, AllocationItem, Family, Member, AllocationRul
 import { stellarRpcService, SubmitTxResult } from "./stellar-rpc";
 
 const REGISTRY_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V";
+  process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CC7AKOBA47NQ7FR7K27DJWX67CIJCIABDSUTULZ2ODQAUTMECBOI4JLG";
 
 export interface TxSignerOptions {
   signTransaction?: (xdrBase64: string) => Promise<string>;
@@ -27,7 +27,7 @@ export class RegistryContractService {
   }
 
   getContractId(): string {
-    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CASNMT6EHJFZHCVK3O7N253ANI3FG2AABPS7DT6QGWZRBKKFTVR5XC7V";
+    return this.contractId || process.env.NEXT_PUBLIC_FAMILY_REGISTRY_CONTRACT_ID || "CC7AKOBA47NQ7FR7K27DJWX67CIJCIABDSUTULZ2ODQAUTMECBOI4JLG";
   }
 
   /**
@@ -95,12 +95,23 @@ export class RegistryContractService {
     const strategyNum =
       strategy === "Percentage" ? 0 : strategy === "FixedAmount" ? 1 : 2;
 
-    const allocationsScVal = nativeToScVal(
-      allocations.map((item) => ({
-        recipient: new Address(item.recipient),
-        share_or_amount: item.shareOrAmount,
-        label: item.label,
-      }))
+    // Soroban struct keys are sorted symbols, and amounts are signed i128.
+    // JS object inference instead produces string keys and u64 for small bigints.
+    const allocationsScVal = xdr.ScVal.scvVec(
+      allocations.map((item) => xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("label"),
+          val: nativeToScVal(item.label, { type: "string" }),
+        }),
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("recipient"),
+          val: new Address(item.recipient).toScVal(),
+        }),
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("share_or_amount"),
+          val: nativeToScVal(item.shareOrAmount, { type: "i128" }),
+        }),
+      ]))
     );
 
     return contract.call(
